@@ -1,10 +1,8 @@
 import os
 import shutil
 from dotenv import load_dotenv
-from parcle import Parcle
 
 load_dotenv()
-client = Parcle(api_key=os.environ.get("PARCLE_API_KEY"))
 
 # ── Add one entry per project: (project_id, folder_path) ──
 PROJECTS = [
@@ -30,7 +28,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB — Parcle's upload limit
 TEMP_DIR = "_parcle_tmp"
 
 
-def ingest_project(project_id, project_path):
+def ingest_project(client, project_id, project_path):
     print(f"\n{'=' * 60}")
     print(f"INGESTING PROJECT: {project_id}")
     print(f"PATH: {project_path}")
@@ -93,18 +91,34 @@ def ingest_project(project_id, project_path):
     return ingested, skipped, failed
 
 
-# ── Run for every project ──
-total_ingested = 0
-total_skipped = 0
-total_failed = 0
+def main():
+    # Imported here (not at module level) so that importing this module
+    # just to read PROJECTS — e.g. from report_generator.py — doesn't
+    # require a Parcle client or API key, and can't accidentally trigger
+    # a network call.
+    from parcle import Parcle
 
-for project_id, project_path in PROJECTS:
-    i, s, f = ingest_project(project_id, project_path)
-    total_ingested += i
-    total_skipped += s
-    total_failed += f
+    client = Parcle(api_key=os.environ.get("PARCLE_API_KEY"))
 
-print(f"\n{'=' * 60}")
-print(f"ALL PROJECTS DONE")
-print(f"Total: {total_ingested} ingested, {total_skipped} skipped (too large), {total_failed} failed")
-print('=' * 60)
+    total_ingested = 0
+    total_skipped = 0
+    total_failed = 0
+
+    for project_id, project_path in PROJECTS:
+        i, s, f = ingest_project(client, project_id, project_path)
+        total_ingested += i
+        total_skipped += s
+        total_failed += f
+
+    print(f"\n{'=' * 60}")
+    print(f"ALL PROJECTS DONE")
+    print(f"Total: {total_ingested} ingested, {total_skipped} skipped (too large), {total_failed} failed")
+    print('=' * 60)
+
+
+# Only runs the full ingestion when this file is executed directly
+# (e.g. `python ingest_all_projects.py`). Other scripts can safely
+# `import ingest_all_projects` just to read PROJECTS without
+# triggering a full re-ingestion as a side effect.
+if __name__ == "__main__":
+    main()
