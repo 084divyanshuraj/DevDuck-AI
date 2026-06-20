@@ -29,16 +29,19 @@ SETUP_ACTIONS = {
 }
 
 
-def print_menu():
+def print_menu(show_setup=False):
     print("\n" + "=" * 50)
     print("  🦆 DevDuck AI")
     print("=" * 50)
     print("\nWhat would you like to do?\n")
     for key, (label, _, _) in BOTS.items():
         print(f"  {key}. {label}")
-    print()
-    for key, (label, _, _) in SETUP_ACTIONS.items():
-        print(f"  {key}. {label}")
+
+    if show_setup:
+        print()
+        for key, (label, _, _) in SETUP_ACTIONS.items():
+            print(f"  {key}. {label}")
+
     print("\n  0. Exit\n")
 
 
@@ -74,8 +77,13 @@ def run_script(folder, script):
 
 
 def main():
+    show_setup = "--setup" in sys.argv
+
     while True:
-        print_menu()
+        print_menu(show_setup=show_setup)
+        if not show_setup:
+            print("  (Adding a new project? Run: python devduck.py --setup)\n")
+
         choice = input("Pick an option: ").strip()
 
         if choice == "0":
