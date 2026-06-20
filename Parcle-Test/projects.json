@@ -1,0 +1,18 @@
+{
+  "taskapp": {
+    "display_name": "TaskApp — Full Stack Task Manager",
+    "description": "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync"
+  },
+  "weather-website": {
+    "display_name": "Simple Weather Website",
+    "description": "Python/Flask backend + vanilla JS frontend, pulls live weather from OpenWeather API"
+  },
+  "tic-tac-toe": {
+    "display_name": "Tic-Tac-Toe",
+    "description": "Vanilla HTML/CSS/JS browser game, no backend"
+  },
+  "tourist-safety": {
+    "display_name": "Tourist Safety Hub (SIH 2025)",
+    "description": "Node.js/Express app for tourist safety — SOS alerts, live tracking, admin dashboard"
+  }
+}
