@@ -1,0 +1,24 @@
+{
+  "repository": {
+    "name": "DevDuck-AI-Test",
+    "files": [
+      "src/main.py",
+      "src/utils.py",
+      "src/unused_helpers.py",
+      "docs/old_notes.txt",
+      "empty_folder_1/",
+      "assets/empty_folder_2/",
+      ".env.example",
+      "package.json"
+    ],
+    "dead_files": [
+      "src/unused_helpers.py",
+      "docs/old_notes.txt"
+    ],
+    "empty_folders": [
+      "empty_folder_1/",
+      "assets/empty_folder_2/"
+    ],
+    "readme_content": "# DevDuck AI Test Project\n\nThis is a test project for DevDuck AI.\n\n## Features\n- Uses AI\n- Cleans code\n\n## License\nMIT License\n"
+  }
+}
