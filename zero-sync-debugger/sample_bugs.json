@@ -1,0 +1,23 @@
+[
+  {
+    "title": "500 Login Error",
+    "description": "Users get 500 error during login",
+    "root_cause": "Missing JWT_SECRET",
+    "fix": "Add JWT_SECRET environment variable",
+    "severity": "CRITICAL"
+  },
+  {
+    "title": "Database Timeout",
+    "description": "Application times out when querying the user table",
+    "root_cause": "Missing index on email column causing full table scan",
+    "fix": "Add database index to the email column on the user table",
+    "severity": "WARNING"
+  },
+  {
+    "title": "404 Page Not Found on Profile",
+    "description": "Navigating to /profile returns 404 error",
+    "root_cause": "Incorrect React Router route configuration",
+    "fix": "Update route path from /user-profile to /profile",
+    "severity": "ERROR"
+  }
+]
