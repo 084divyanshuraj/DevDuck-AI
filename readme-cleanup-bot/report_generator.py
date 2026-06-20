@@ -165,6 +165,35 @@ def main():
         except Exception as e:
             print(f"❌ Warning: Failed to sync with Parcle memory: {e}")
             
+        # ---------------------------------------------------------
+        # AUTO-GENERATE README PROMPT
+        # ---------------------------------------------------------
+        if doc_results.get("missing_sections"):
+            print("\n----------------------------------------")
+            auto_fix = input("🦆 DevDuck noticed missing documentation. Would you like to auto-generate and save a README_improved.md based on the codebase? (y/n): ").strip().lower()
+            if auto_fix == 'y':
+                intelligent_sections = doc_checker.generate_intelligent_sections(client, project_id)
+                
+                # Build the new README
+                original_content = doc_checker.readme_content if doc_checker.readme_content else "# " + display_name + "\n"
+                new_readme_content = original_content + "\n\n"
+                
+                for section_title, generated_text in intelligent_sections.items():
+                    new_readme_content += generated_text + "\n"
+                    
+                # Save it
+                save_dir = project_path if (project_path and os.path.isdir(project_path)) else os.path.dirname(os.path.abspath(__file__))
+                save_path = os.path.join(save_dir, "README_improved.md")
+                
+                try:
+                    with open(save_path, "w", encoding="utf-8") as out_f:
+                        out_f.write(new_readme_content)
+                    print(f"\n✅ Success! New documentation auto-generated and saved to:")
+                    print(f"   {save_path}")
+                    print("   Please review it before replacing your original README.md.")
+                except Exception as e:
+                    print(f"\n❌ Failed to save README_improved.md: {e}")
+        
         # Continue loop
         print("\n----------------------------------------")
         cont = input("Analyze another project? (y/n): ").strip().lower()

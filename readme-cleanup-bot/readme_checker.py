@@ -66,5 +66,41 @@ class ReadmeChecker:
             "documentation_score": score,
             "issues": self.issues,
             "suggestions": suggestions,
-            "generated_sections": self.generated_sections
+            "generated_sections": self.generated_sections,
+            "missing_sections": self.missing_sections
         }
+
+    def generate_intelligent_sections(self, client, project_id: str) -> dict:
+        """
+        Uses Parcle to dynamically generate accurate content for missing sections based on the actual codebase.
+        """
+        intelligent_sections = {}
+        print("\n🧠 DevDuck is reading the codebase to generate missing documentation...")
+        
+        for section in self.missing_sections:
+            print(f"  → Generating '{section}' section...")
+            
+            # Craft targeted queries to Parcle depending on the section
+            if section == "Installation":
+                query = "What are the exact step-by-step instructions to install and configure this project? Include any dependencies (e.g. npm install, pip install) and environment variables needed. Return ONLY the markdown steps."
+            elif section == "Usage":
+                query = "How do you run or use this project? Provide the command to start the server or run the script, and an example if applicable. Return ONLY the markdown."
+            elif section == "Features":
+                query = "What are the core features of this project? Return them as a markdown bulleted list."
+            elif section == "Deployment":
+                query = "How is this project meant to be deployed? Return a brief deployment summary in markdown."
+            else:
+                query = f"Write a short, professional '{section}' section for the README of this project in markdown."
+                
+            try:
+                result = client.search(user_id=project_id, query=query)
+                if getattr(result, "answer", None):
+                    # Format it nicely
+                    intelligent_sections[section] = f"## {section}\n\n{result.answer}\n"
+                else:
+                    intelligent_sections[section] = self.generated_sections.get(section, "")
+            except Exception as e:
+                print(f"    ⚠️ Could not generate {section}: {e}")
+                intelligent_sections[section] = self.generated_sections.get(section, "")
+                
+        return intelligent_sections
