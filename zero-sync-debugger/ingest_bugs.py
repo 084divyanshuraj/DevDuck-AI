@@ -1,11 +1,12 @@
 import os
 import sys
+import json
 from dotenv import load_dotenv
-
-# Add parent directory to path so we can import parcle if it's there,
-# or we can assume parcle is installed as a package or in PYTHONPATH.
-# Using standard import since parcle is available.
 from parcle import Parcle
+
+# Force utf-8 encoding for Windows console to support emojis
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 def main():
     load_dotenv()
@@ -17,27 +18,37 @@ def main():
         
     client = Parcle(api_key=api_key)
     
-    user_id = "zero_sync_debugger"
-    file_to_ingest = "sample_bugs.json"
+    # Load unified registry
+    registry_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Parcle-Test", "projects.json")
     
-    # Change directory to script's directory so relative paths work reliably
+    if os.path.exists(registry_path):
+        with open(registry_path, "r", encoding="utf-8") as f:
+            registry = json.load(f)
+    else:
+        print("⚠️ No unified projects.json found. Using default zero_sync_debugger namespace.")
+        registry = {"zero_sync_debugger": {"display_name": "Zero-Sync Default"}}
+        
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(script_dir)
-    
-    print(f"Creating Parcle user: {user_id}")
-    client.create_user(user_id=user_id)
+    file_to_ingest = os.path.join(script_dir, "sample_bugs.json")
     
     if not os.path.exists(file_to_ingest):
-        print(f"Error: {file_to_ingest} not found in {script_dir}")
+        print(f"Error: {file_to_ingest} not found.")
         sys.exit(1)
         
-    print(f"Ingesting {file_to_ingest} into Parcle memory...")
-    client.ingest_file(
-        user_id=user_id,
-        file=file_to_ingest
-    )
+    print(f"Starting bulk bug ingestion for {len(registry)} projects...")
     
-    print("Bugs ingested successfully!")
+    for project_id, info in registry.items():
+        display_name = info.get("display_name", project_id)
+        print(f"\n→ Syncing bug history for: {display_name} ({project_id})")
+        
+        try:
+            client.create_user(user_id=project_id)
+            client.ingest_file(user_id=project_id, file=file_to_ingest)
+            print("  ✅ Bug memory synced successfully!")
+        except Exception as e:
+            print(f"  ❌ Failed to sync: {e}")
+            
+    print("\nBulk ingestion complete! All projects are now ready for debugging.")
 
 if __name__ == "__main__":
     main()
