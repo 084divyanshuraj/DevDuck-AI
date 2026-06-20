@@ -52,4 +52,7 @@ This project relies on Parcle for its AI-driven memory. The `Parcle` client is u
    ```bash
    python debug_search.py
    ```
-   *Example input:* `> Users getting login 500 error`
+
+> **Try it yourself!** When the prompt appears, describe your issue in plain English:
+> 
+> `> Users getting login 500 error`
