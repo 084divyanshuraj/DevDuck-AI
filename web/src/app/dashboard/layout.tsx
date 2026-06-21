@@ -6,12 +6,13 @@ import { useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, setDoc, getDocs, collection } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
-import { 
-  LayoutDashboard, 
-  Bot, 
-  Bug, 
-  FileCode, 
-  GitPullRequest, 
+import {
+  LayoutDashboard,
+  Bot,
+  Bug,
+  FileCode,
+  GitPullRequest,
+  Workflow,
   ChevronRight,
   Database,
   User,
@@ -58,15 +59,15 @@ export default function DashboardLayout({
   const [newProjSlug, setNewProjSlug] = useState("");
   const [newProjDesc, setNewProjDesc] = useState("");
   const [newProjSourceType, setNewProjSourceType] = useState<"folder" | "zip" | "github">("folder");
-  
+
   // Specific source inputs
   const [newProjFolderPath, setNewProjFolderPath] = useState("");
   const [newProjZipFile, setNewProjZipFile] = useState<File | null>(null);
   const [newProjGithubUrl, setNewProjGithubUrl] = useState("");
-  
+
   // Ingest now checkbox
   const [newProjIngestNow, setNewProjIngestNow] = useState(true);
-  
+
   const [addProjError, setAddProjError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStep, setSubmitStep] = useState("");
@@ -103,7 +104,7 @@ export default function DashboardLayout({
         // Filter: Only show default public template projects OR projects registered in the current user's Firestore collection.
         const defaultIds = new Set(defaultProjects.map(p => p.id));
         const firestoreIds = new Set(firestoreProjects.map(p => p.id));
-        
+
         const filteredApiProjects = apiProjects.filter(p => defaultIds.has(p.id) || firestoreIds.has(p.id));
 
         const projectMap = new Map();
@@ -243,7 +244,7 @@ export default function DashboardLayout({
 
     try {
       setSubmitStep("Sending project details to backend...");
-      
+
       const response = await fetch("/api/projects/add", {
         method: "POST",
         body: formData,
@@ -272,7 +273,7 @@ export default function DashboardLayout({
       // Save project details to local storage so dashboard page can display them
       const defaultDetails = {
         taskapp: {
-          name: "TaskApp — Full Stack Task Manager",
+          name: "TaskApp â€” Full Stack Task Manager",
           description: "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync",
           healthScore: 92,
           totalBugs: 14,
@@ -300,7 +301,7 @@ export default function DashboardLayout({
         },
         "tourist-safety": {
           name: "Tourist Safety Hub (SIH 2025)",
-          description: "Node.js/Express app for tourist safety — SOS alerts, live tracking, admin dashboard",
+          description: "Node.js/Express app for tourist safety â€” SOS alerts, live tracking, admin dashboard",
           healthScore: 84,
           totalBugs: 9,
           prStatus: "APPROVED",
@@ -319,8 +320,8 @@ export default function DashboardLayout({
         totalBugs: newProjIngestNow ? Math.floor(Math.random() * 4) + 1 : 0,
         prStatus: "APPROVED",
         lastSync: newProjIngestNow ? "Just now" : "Never synced",
-        details: newProjIngestNow 
-          ? `Repository successfully ingested from ${newProjSourceType === 'zip' ? 'uploaded ZIP archive' : sourcePath}. Ready to use.` 
+        details: newProjIngestNow
+          ? `Repository successfully ingested from ${newProjSourceType === 'zip' ? 'uploaded ZIP archive' : sourcePath}. Ready to use.`
           : `Project registered metadata. Code ingestion skipped. Path: ${sourcePath}.`
       };
       localStorage.setItem("devduck_project_details", JSON.stringify(currentDetails));
@@ -357,7 +358,7 @@ export default function DashboardLayout({
       // Trigger reloads across pages
       await loadProjects();
       window.dispatchEvent(new CustomEvent("projectsUpdated"));
-      
+
       // Auto-select new project
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("projectChanged", { detail: newProjSlug }));
@@ -375,6 +376,7 @@ export default function DashboardLayout({
     { name: "Zero-Sync Debugger", path: "/dashboard/debugger", icon: Bug },
     { name: "Repo Health & Docs", path: "/dashboard/health", icon: FileCode },
     { name: "PR Reviewer Bot", path: "/dashboard/reviewer", icon: GitPullRequest },
+    { name: "Architecture Map", path: "/dashboard/architecture", icon: Workflow },
   ];
 
   if (loadingAuth) {
@@ -395,7 +397,7 @@ export default function DashboardLayout({
             <img src="/kala-logo.png" alt="Kala AI Logo" className="w-full h-full object-contain" />
           </div>
         </Link>
-        <button 
+        <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 text-zinc-400 hover:text-white transition-colors"
         >
@@ -405,7 +407,7 @@ export default function DashboardLayout({
 
       {/* MOBILE SIDEBAR BACKDROP */}
       {mobileMenuOpen && (
-        <div 
+        <div
           onClick={() => setMobileMenuOpen(false)}
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-15 md:hidden"
         />
@@ -429,7 +431,7 @@ export default function DashboardLayout({
               <label className="text-[9px] uppercase font-bold tracking-wider text-zinc-500 flex items-center gap-1">
                 <Database className="w-3 h-3 text-amber-500" /> Active Context
               </label>
-              <button 
+              <button
                 onClick={() => {
                   setIsAddProjectOpen(true);
                   setAddProjError("");
@@ -440,7 +442,7 @@ export default function DashboardLayout({
               </button>
             </div>
             <div className="relative">
-              <select 
+              <select
                 value={activeProject}
                 onChange={(e) => {
                   setActiveProject(e.target.value);
@@ -471,8 +473,8 @@ export default function DashboardLayout({
                   href={item.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 group
-                    ${isActive 
-                      ? "bg-amber-500/10 text-amber-500 border border-amber-500/10" 
+                    ${isActive
+                      ? "bg-amber-500/10 text-amber-500 border border-amber-500/10"
                       : "text-zinc-450 hover:text-zinc-200 hover:bg-zinc-900/40 border border-transparent"}
                   `}
                 >
@@ -499,7 +501,7 @@ export default function DashboardLayout({
               </div>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => signOut(auth)}
             className="text-zinc-500 hover:text-rose-500 transition-colors p-1.5 rounded-lg hover:bg-zinc-900/50 cursor-pointer"
             title="Sign Out"
@@ -519,20 +521,20 @@ export default function DashboardLayout({
       {/* ADD PROJECT MODAL */}
       {isAddProjectOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div 
-            onClick={() => { if (!isSubmitting) setIsAddProjectOpen(false); }} 
+          <div
+            onClick={() => { if (!isSubmitting) setIsAddProjectOpen(false); }}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           <div className="glass-panel w-full max-w-md p-6 sm:p-8 rounded-2xl relative z-10 animate-fade-in shadow-2xl border border-zinc-850">
             {!isSubmitting && (
-              <button 
+              <button
                 onClick={() => setIsAddProjectOpen(false)}
                 className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
-            
+
             <div className="flex flex-col items-center mb-6">
               <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 text-amber-500 mb-3">
                 <FolderOpen className="w-6 h-6" />
@@ -558,7 +560,7 @@ export default function DashboardLayout({
                 {/* 1. Project name */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Project Name</label>
-                  <input 
+                  <input
                     type="text"
                     value={newProjName}
                     onChange={(e) => handleNameChange(e.target.value)}
@@ -571,7 +573,7 @@ export default function DashboardLayout({
                 {/* 2. Project ID / Slug */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Project ID (Slug ID)</label>
-                  <input 
+                  <input
                     type="text"
                     value={newProjSlug}
                     onChange={(e) => setNewProjSlug(e.target.value)}
@@ -585,7 +587,7 @@ export default function DashboardLayout({
                 {/* 3. Description */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Description</label>
-                  <textarea 
+                  <textarea
                     value={newProjDesc}
                     onChange={(e) => setNewProjDesc(e.target.value)}
                     placeholder="What is this repository's purpose?"
@@ -598,36 +600,36 @@ export default function DashboardLayout({
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Ingestion Method</label>
                   <div className="grid grid-cols-3 gap-2">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setNewProjSourceType("folder")}
                       className={`py-2 rounded-lg border text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
-                        newProjSourceType === "folder" 
-                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30" 
+                        newProjSourceType === "folder"
+                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
                           : "bg-zinc-900/30 text-zinc-400 border-zinc-850 hover:bg-zinc-900"
                       }`}
                     >
                       <Folder className="w-3.5 h-3.5" />
                       Local Folder
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setNewProjSourceType("zip")}
                       className={`py-2 rounded-lg border text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
-                        newProjSourceType === "zip" 
-                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30" 
+                        newProjSourceType === "zip"
+                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
                           : "bg-zinc-900/30 text-zinc-400 border-zinc-850 hover:bg-zinc-900"
                       }`}
                     >
                       <FileArchive className="w-3.5 h-3.5" />
                       ZIP Archive
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setNewProjSourceType("github")}
                       className={`py-2 rounded-lg border text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
-                        newProjSourceType === "github" 
-                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30" 
+                        newProjSourceType === "github"
+                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
                           : "bg-zinc-900/30 text-zinc-400 border-zinc-850 hover:bg-zinc-900"
                       }`}
                     >
@@ -641,7 +643,7 @@ export default function DashboardLayout({
                 {newProjSourceType === "folder" && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Full Folder Path</label>
-                    <input 
+                    <input
                       type="text"
                       value={newProjFolderPath}
                       onChange={(e) => setNewProjFolderPath(e.target.value)}
@@ -656,7 +658,7 @@ export default function DashboardLayout({
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Upload ZIP File</label>
                     <div className="border border-dashed border-zinc-800 hover:border-zinc-700 rounded-xl p-4 bg-zinc-950/40 text-center flex flex-col items-center justify-center cursor-pointer transition-colors relative">
-                      <input 
+                      <input
                         type="file"
                         accept=".zip"
                         onChange={(e) => {
@@ -679,7 +681,7 @@ export default function DashboardLayout({
                 {newProjSourceType === "github" && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">GitHub Repository URL (Public only)</label>
-                    <input 
+                    <input
                       type="url"
                       value={newProjGithubUrl}
                       onChange={(e) => setNewProjGithubUrl(e.target.value)}
@@ -692,7 +694,7 @@ export default function DashboardLayout({
 
                 {/* 6. Ingest now checkbox */}
                 <div className="flex items-center gap-2 mt-1">
-                  <input 
+                  <input
                     type="checkbox"
                     id="ingestNow"
                     checked={newProjIngestNow}
@@ -708,7 +710,7 @@ export default function DashboardLayout({
                   <div className="text-xs text-rose-500 font-semibold">{addProjError}</div>
                 )}
 
-                <button 
+                <button
                   type="submit"
                   className="w-full mt-2 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
