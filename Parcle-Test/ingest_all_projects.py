@@ -1,12 +1,22 @@
 import os
+import sys
 import shutil
 from dotenv import load_dotenv
+
+# When this script is spawned as a subprocess (e.g. by the Next.js API
+# route via child_process.spawn), Windows doesn't inherit the UTF-8
+# console encoding a normal terminal has — it defaults to 'charmap',
+# which crashes on any emoji in print() statements below (✅ ⏭️ ❌ etc).
+# Force UTF-8 explicitly so this works identically whether run directly
+# or spawned from another process.
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 load_dotenv()
 
 # ── Add one entry per project: (project_id, folder_path) ──
 PROJECTS = [
-    ("task_bar111_", r"C:\Users\sarra\OneDrive\Desktop\task_bar111"),
+    ("student-placement-predictor", r"C:\DevDuck-AI\Parcle-Test\added_projects\Student-Placement-Predictor"),
     ("weather-website", r"D:\Work\Projects-hack\Simple-Weather-Website--main"),
     ("tic-tac-toe", r"D:\Work\Projects-hack\tic-tac-toe-main"),
     ("tourist-safety", r"D:\Work\Projects-hack\Tourist_Safety_SIH2025-main"),

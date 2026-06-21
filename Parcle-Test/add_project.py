@@ -25,8 +25,18 @@ import json
 import shutil
 import zipfile
 import tempfile
+import argparse
 import subprocess
 from dotenv import load_dotenv
+
+# Same fix as ingest_all_projects.py — this script is spawned directly
+# by the Next.js API route (web/src/app/api/projects/add/route.ts) via
+# child_process.spawn, which doesn't inherit a UTF-8 console on Windows.
+# Without this, any emoji in print() statements (here or in functions
+# this script calls, like ingest_project()) crashes with a charmap
+# UnicodeEncodeError.
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
@@ -160,113 +170,117 @@ def get_from_github(url):
     return clone_path, None
 
 
-def prompt_choice():
-    print("\nHow do you want to add this project?")
-    print("  1. Local folder path")
-    print("  2. Zip file")
-    print("  3. GitHub repo URL (public only)")
-    return input("\nPick an option (1-3): ").strip()
+def run_add_project(source_type, source_value, project_id, display_name, description, ingest_now, registry):
+    """
+    Core logic shared by both interactive and --cli modes: resolve the
+    source into a real folder path, validate the project_id, update both
+    registry files, and optionally ingest. Returns (success: bool, message: str).
+    """
+    if source_type == "folder":
+        project_path, error = get_local_folder(source_value)
+    elif source_type == "zip":
+        project_path, error = get_from_zip(source_value)
+    elif source_type == "github":
+        project_path, error = get_from_github(source_value)
+    else:
+        return False, f"Invalid source type: {source_type}"
+
+    if error:
+        return False, error
+
+    print(f"PROGRESS: Project source ready at: {project_path}")
+
+    valid, msg = validate_project_id(project_id, registry)
+    if not valid:
+        return False, msg
+
+    registry[project_id] = {
+        "display_name": display_name or project_id,
+        "description": description or "",
+    }
+    save_registry(registry)
+    print(f"PROGRESS: Registered '{project_id}' in projects.json")
+
+    try:
+        add_to_python_projects_list(project_id, project_path)
+        print(f"PROGRESS: Added '{project_id}' to ingest_all_projects.py's PROJECTS list")
+    except Exception as e:
+        print(f"PROGRESS: Couldn't auto-update PROJECTS list: {e}")
+        print(f"PROGRESS: Add this line manually: (\"{project_id}\", r\"{project_path}\"),")
+
+    if ingest_now:
+        print("PROGRESS: Ingesting project code into memory database now...")
+        from parcle import Parcle
+        client = Parcle(api_key=os.environ.get("PARCLE_API_KEY"))
+        ingested, skipped, failed = ingest_project(client, project_id, project_path)
+        print(f"PROGRESS: Ingestion done. {ingested} ingested, {skipped} skipped, {failed} failed.")
+    else:
+        print("PROGRESS: Skipped ingestion. Run later via devduck.py --setup (option 7).")
+
+    return True, f"'{display_name or project_id}' is ready to use across all DevDuck AI bots."
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="Add a new project to DevDuck AI's memory.")
-    parser.add_argument("--cli", action="store_true", help="Run in non-interactive CLI mode")
-    parser.add_argument("--name", help="Display name of the project")
-    parser.add_argument("--slug", help="Project ID (slug) to register")
-    parser.add_argument("--description", default="", help="Short description of the project")
-    parser.add_argument("--source-type", choices=["folder", "zip", "github"], help="Source type")
-    parser.add_argument("--source", help="Path or URL of the source")
-    parser.add_argument("--ingest", choices=["y", "n"], default="n", help="Ingest project code now? (y/n)")
-    
-    args = parser.parse_args()
-
+def run_cli_mode(args):
+    """
+    Non-interactive mode, used when this script is spawned by another
+    process (e.g. the Next.js API route) that can't answer input() prompts.
+    Prints plain progress lines to stdout instead of decorative banners,
+    so a calling process can capture and relay them as logs.
+    """
     registry = load_registry()
 
-    if args.cli:
-        # Non-interactive CLI mode
-        if not args.name or not args.source_type or not args.source:
-            print("ERROR: --name, --source-type, and --source are required in --cli mode.")
-            sys.exit(1)
+    project_id = args.slug or slugify(args.name or "project")
 
-        project_id = args.slug or slugify(args.name)
-        valid, msg = validate_project_id(project_id, registry)
-        if not valid:
-            print(f"ERROR: {msg}")
-            sys.exit(1)
+    success, message = run_add_project(
+        source_type=args.source_type,
+        source_value=args.source,
+        project_id=project_id,
+        display_name=args.name,
+        description=args.description,
+        ingest_now=(args.ingest == "y"),
+        registry=registry,
+    )
 
-        display_name = args.name
-        description = args.description
-        source_type = args.source_type
-        raw_source = args.source
+    if success:
+        print(f"SUCCESS: {message}")
+        sys.exit(0)
+    else:
+        print(f"ERROR: {message}")
+        sys.exit(1)
 
-        if source_type == "folder":
-            project_path, error = get_local_folder(raw_source)
-        elif source_type == "zip":
-            project_path, error = get_from_zip(raw_source)
-        elif source_type == "github":
-            project_path, error = get_from_github(raw_source)
-        else:
-            error = "Invalid source type"
 
-        if error:
-            print(f"ERROR: {error}")
-            sys.exit(1)
-
-        print(f"PROGRESS: Project source ready at: {project_path}")
-
-        # Update the registry
-        registry[project_id] = {
-            "display_name": display_name,
-            "description": description,
-        }
-        save_registry(registry)
-        print(f"PROGRESS: Registered '{project_id}' in projects.json")
-
-        # Update ingest_all_projects.py's PROJECTS list
-        try:
-            add_to_python_projects_list(project_id, project_path)
-            print(f"PROGRESS: Added '{project_id}' to ingest_all_projects.py's PROJECTS list")
-        except Exception as e:
-            print(f"ERROR: Couldn't auto-update PROJECTS list: {e}")
-            sys.exit(1)
-
-        # Ingest now
-        if args.ingest == "y":
-            print("PROGRESS: Ingesting project code into memory database now...")
-            try:
-                from parcle import Parcle
-                client = Parcle(api_key=os.environ.get("PARCLE_API_KEY"))
-                ingested, skipped, failed = ingest_project(client, project_id, project_path)
-                print(f"PROGRESS: Ingested {ingested} files, skipped {skipped}, failed {failed}.")
-            except Exception as e:
-                print(f"ERROR: Ingestion failed: {e}")
-                sys.exit(1)
-        else:
-            print("PROGRESS: Ingestion skipped as requested.")
-
-        print(f"SUCCESS: {project_id}")
-        return
-
-    # Interactive mode (fallback)
+def run_interactive_mode():
     print("=" * 50)
     print("  ➕ Add a New Project to DevDuck AI")
     print("=" * 50)
 
-    choice = prompt_choice()
+    registry = load_registry()
 
-    if choice == "1":
-        raw = input("\nEnter the full folder path: ").strip()
-        project_path, error = get_local_folder(raw)
-    elif choice == "2":
-        raw = input("\nEnter the full path to the .zip file: ").strip()
-        project_path, error = get_from_zip(raw)
-    elif choice == "3":
-        raw = input("\nEnter the GitHub repo URL: ").strip()
-        project_path, error = get_from_github(raw)
-    else:
+    choice = prompt_choice()
+    source_type_map = {"1": "folder", "2": "zip", "3": "github"}
+    source_type = source_type_map.get(choice)
+
+    if not source_type:
         print("\nInvalid choice. Exiting.")
         return
+
+    prompts = {
+        "folder": "\nEnter the full folder path: ",
+        "zip": "\nEnter the full path to the .zip file: ",
+        "github": "\nEnter the GitHub repo URL: ",
+    }
+    source_value = input(prompts[source_type]).strip()
+
+    # Resolve just to show progress + get a suggested slug before asking
+    # the remaining questions — run_add_project() will resolve it again,
+    # which is cheap (no network call for folder/zip; github re-clone is
+    # avoided below by short-circuiting if already resolved).
+    if source_type == "folder":
+        project_path, error = get_local_folder(source_value)
+    elif source_type == "zip":
+        project_path, error = get_from_zip(source_value)
+    else:
+        project_path, error = get_from_github(source_value)
 
     if error:
         print(f"\n⚠️  {error}")
@@ -274,7 +288,6 @@ def main():
 
     print(f"\n✅ Project source ready at: {project_path}")
 
-    # Suggest a slug from the folder name, but let the user confirm/override
     suggested_id = slugify(os.path.basename(project_path.rstrip(os.sep)))
     project_id = input(f"\nProject ID (slug) [{suggested_id}]: ").strip() or suggested_id
 
@@ -286,16 +299,10 @@ def main():
     display_name = input("Display name (shown in menus): ").strip() or project_id
     description = input("Short description (optional): ").strip()
 
-    # Update the registry (used by every bot's project picker)
-    registry[project_id] = {
-        "display_name": display_name,
-        "description": description,
-    }
+    registry[project_id] = {"display_name": display_name, "description": description}
     save_registry(registry)
     print(f"\n✅ Added '{project_id}' to projects.json")
 
-    # Update ingest_all_projects.py's PROJECTS list (used by README Cleanup
-    # Bot and PR Reviewer to locate the real source on disk)
     try:
         add_to_python_projects_list(project_id, project_path)
         print(f"✅ Added '{project_id}' to ingest_all_projects.py's PROJECTS list")
@@ -303,7 +310,6 @@ def main():
         print(f"⚠️  Couldn't auto-update PROJECTS list: {e}")
         print(f"   Add this line manually: (\"{project_id}\", r\"{project_path}\"),")
 
-    # Ingest now
     run_now = input("\nIngest this project's code into memory now? (y/n): ").strip().lower()
     if run_now == "y":
         from parcle import Parcle
@@ -311,9 +317,30 @@ def main():
         ingested, skipped, failed = ingest_project(client, project_id, project_path)
         print(f"\nDone. {ingested} ingested, {skipped} skipped, {failed} failed.")
     else:
-        print(f"\nSkipped. Run this later: python devduck.py --setup (option 6)")
+        print(f"\nSkipped. Run this later: python devduck.py --setup (option 7)")
 
     print(f"\n🎉 '{display_name}' is ready to use across all DevDuck AI bots.")
+
+
+def main():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--cli", action="store_true")
+    parser.add_argument("--name")
+    parser.add_argument("--slug")
+    parser.add_argument("--description", default="")
+    parser.add_argument("--source-type", dest="source_type", choices=["folder", "zip", "github"])
+    parser.add_argument("--source")
+    parser.add_argument("--ingest", default="y", choices=["y", "n"])
+
+    args, _unknown = parser.parse_known_args()
+
+    if args.cli:
+        if not args.name or not args.source_type or not args.source:
+            print("ERROR: --cli mode requires --name, --source-type, and --source")
+            sys.exit(1)
+        run_cli_mode(args)
+    else:
+        run_interactive_mode()
 
 
 if __name__ == "__main__":

@@ -15,12 +15,16 @@
     "display_name": "Tourist Safety Hub (SIH 2025)",
     "description": "Node.js/Express app for tourist safety \u2014 SOS alerts, live tracking, admin dashboard"
   },
-  "tic-tac-toe-2": {
-    "display_name": "tic-tac-toe-2",
-    "description": ""
-  },
   "task_bar111_": {
     "display_name": "task_bar111",
     "description": "This is a bsaic wesite"
+  },
+  "cli-test-project": {
+    "display_name": "CLI Test",
+    "description": "testing the new cli mode"
+  },
+  "student-placement-predictor": {
+    "display_name": "Student Placement Predictor",
+    "description": "Student Placement Predictor is a web-based application that predicts a student's placement chances based on academic and skill-related parameters. The system analyzes user inputs and generates placement insights using machine learning techniques. It provides an intuitive interface for students to evaluate their readiness for campus recruitment. The platform also offers personalized feedback and improvement suggestions to help users strengthen their profiles. Designed with a user-friendly interface, it aims to support students in making informed career decisions.\r\n"
   }
 }
