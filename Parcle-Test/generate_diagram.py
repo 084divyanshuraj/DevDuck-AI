@@ -19,8 +19,8 @@ import sys
 import json
 from dotenv import load_dotenv
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 # Same fix as the other scripts in this folder — required when spawned
 # as a subprocess on Windows, since print() with non-ASCII chars would
@@ -32,12 +32,12 @@ try:
     from parcle import Parcle
 except ImportError:
     print(json.dumps({"success": False, "error": "The 'parcle' package isn't installed. Run: pip install parcle"}))
-    sys.exit(1)
+    sys.exit(0)
 
 API_KEY = os.environ.get("PARCLE_API_KEY")
 if not API_KEY:
-    print(json.dumps({"success": False, "error": "PARCLE_API_KEY not found in .env"}))
-    sys.exit(1)
+    print(json.dumps({"success": False, "error": "PARCLE_API_KEY not found in project root .env"}))
+    sys.exit(0)
 
 
 DIAGRAM_PROMPT = """\
@@ -91,7 +91,7 @@ def extract_mermaid(raw_text):
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"success": False, "error": "Usage: python generate_diagram.py <project_id>"}))
-        sys.exit(1)
+        sys.exit(0)
 
     project_id = sys.argv[1]
 
@@ -106,7 +106,7 @@ def main():
                 "success": False,
                 "error": "Not enough information in this project's memory to generate a meaningful diagram."
             }))
-            sys.exit(1)
+            sys.exit(0)
 
         mermaid_code = extract_mermaid(raw_answer)
 
@@ -116,7 +116,7 @@ def main():
                 "error": "Model response wasn't valid Mermaid syntax.",
                 "raw_response": raw_answer[:500]  # truncated for debugging, not shown to end users
             }))
-            sys.exit(1)
+            sys.exit(0)
 
         print(json.dumps({
             "success": True,
@@ -126,7 +126,7 @@ def main():
 
     except Exception as e:
         print(json.dumps({"success": False, "error": str(e)}))
-        sys.exit(1)
+        sys.exit(0)
 
 
 if __name__ == "__main__":
