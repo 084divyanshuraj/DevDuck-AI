@@ -19,7 +19,6 @@
     "display_name": "task_bar111",
     "description": "This is a bsaic wesite"
   },
-<<<<<<< Updated upstream
   "cli-test-project": {
     "display_name": "CLI Test",
     "description": "testing the new cli mode"
@@ -35,10 +34,5 @@
   "student-review": {
     "display_name": "student review",
     "description": "project"
-=======
-  "inas1": {
-    "display_name": "inas1",
-    "description": "assignment"
->>>>>>> Stashed changes
   }
 }
