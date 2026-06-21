@@ -14,3 +14,6 @@ venv/
 .vscode/
 .idea/
 .DS_Store
+
+# Projects added via add_project.py (cloned/extracted locally, not committed)
+added_projects/

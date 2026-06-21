@@ -23,9 +23,15 @@ BOTS = {
     "4": ("Review a PR diff", "pr-reviewer-bot", "reviewer.py"),
 }
 
+# Visible alongside the bots, but conceptually a management action rather
+# than a bot you "chat" with.
+PROJECT_ACTIONS = {
+    "5": ("➕ Add a new project", "Parcle-Test", "add_project.py"),
+}
+
 SETUP_ACTIONS = {
-    "5": ("Sync bug history into memory (run before #2 / #4 for best results)", "zero-sync-debugger", "ingest_bugs.py"),
-    "6": ("Ingest/re-ingest project source code into memory", "Parcle-Test", "ingest_all_projects.py"),
+    "6": ("Sync bug history into memory (run before #2 / #4 for best results)", "zero-sync-debugger", "ingest_bugs.py"),
+    "7": ("Ingest/re-ingest ALL projects' source code into memory", "Parcle-Test", "ingest_all_projects.py"),
 }
 
 
@@ -35,6 +41,10 @@ def print_menu(show_setup=False):
     print("=" * 50)
     print("\nWhat would you like to do?\n")
     for key, (label, _, _) in BOTS.items():
+        print(f"  {key}. {label}")
+
+    print()
+    for key, (label, _, _) in PROJECT_ACTIONS.items():
         print(f"  {key}. {label}")
 
     if show_setup:
@@ -90,7 +100,7 @@ def main():
             print("Goodbye!")
             break
 
-        entry = BOTS.get(choice) or SETUP_ACTIONS.get(choice)
+        entry = BOTS.get(choice) or PROJECT_ACTIONS.get(choice) or SETUP_ACTIONS.get(choice)
         if not entry:
             print("\nInvalid choice, try again.\n")
             continue

@@ -1,6 +1,6 @@
 {
   "taskapp": {
-    "display_name": "TaskApp — Full Stack Task Manager",
+    "display_name": "TaskApp \u2014 Full Stack Task Manager",
     "description": "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync"
   },
   "weather-website": {
@@ -13,6 +13,10 @@
   },
   "tourist-safety": {
     "display_name": "Tourist Safety Hub (SIH 2025)",
-    "description": "Node.js/Express app for tourist safety — SOS alerts, live tracking, admin dashboard"
+    "description": "Node.js/Express app for tourist safety \u2014 SOS alerts, live tracking, admin dashboard"
+  },
+  "tic-tac-toe-2": {
+    "display_name": "tic-tac-toe-2",
+    "description": ""
   }
 }
