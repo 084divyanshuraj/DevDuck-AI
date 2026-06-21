@@ -151,7 +151,8 @@ def get_from_github(url):
     clone_path = os.path.join(PROJECTS_STORE_DIR, repo_name)
 
     if os.path.exists(clone_path):
-        return None, f"'{repo_name}' was already cloned here before: {clone_path}"
+        print(f"\nPROGRESS: '{repo_name}' already exists locally. Using existing folder: {clone_path}")
+        return clone_path, None
 
     print(f"\nCloning {url} ...")
     try:
