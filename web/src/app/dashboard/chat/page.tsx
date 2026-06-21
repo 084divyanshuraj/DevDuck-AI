@@ -8,7 +8,8 @@ import {
   CornerDownLeft, 
   ArrowRight,
   Database,
-  Code2
+  Code2,
+  Mic
 } from "lucide-react";
 
 interface Message {
@@ -21,6 +22,7 @@ interface Message {
 export default function OnboardingChat() {
   const [projectId, setProjectId] = useState("taskapp");
   const [input, setInput] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
@@ -163,6 +165,54 @@ export default function OnboardingChat() {
     };
   };
 
+  const toggleListening = () => {
+    // @ts-ignore - Webkit prefix for Chrome/Edge
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert("Sorry, your browser doesn't support speech recognition.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false; // Stop when they pause
+    recognition.interimResults = true; // Show words as they speak
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      let currentTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        currentTranscript += event.results[i][0].transcript;
+      }
+      // Replace input box with whatever they just said
+      setInput(currentTranscript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    try {
+      recognition.start();
+    } catch (e) {
+      console.error("Speech recognition already started");
+    }
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -296,16 +346,28 @@ export default function OnboardingChat() {
         {/* Input Bar */}
         <form onSubmit={handleSend} className="p-4 border-t border-zinc-900 bg-zinc-950/40">
           <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 focus-within:border-zinc-700 transition-colors">
+            <button 
+              type="button"
+              onClick={toggleListening}
+              className={`p-2 rounded-lg transition-all flex items-center justify-center shrink-0 cursor-pointer ${
+                isListening 
+                  ? "bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.3)]" 
+                  : "bg-zinc-950 hover:bg-zinc-800 text-zinc-400 border border-transparent"
+              }`}
+              title="Toggle voice input"
+            >
+              <Mic className="w-4 h-4" />
+            </button>
             <input 
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Ask about ${getProjectName(projectId)} codebase...`}
+              placeholder={isListening ? "Listening..." : `Ask about ${getProjectName(projectId)} codebase...`}
               className="flex-1 bg-transparent text-xs outline-none text-zinc-200 placeholder-zinc-500"
             />
             <button 
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || isListening}
               className="p-1.5 bg-zinc-950 disabled:bg-zinc-900 text-zinc-300 disabled:text-zinc-600 border border-zinc-800 disabled:border-transparent rounded-lg transition-colors flex items-center justify-center shrink-0 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
