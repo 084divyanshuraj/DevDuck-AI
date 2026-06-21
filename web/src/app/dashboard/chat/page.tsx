@@ -173,9 +173,9 @@ export default function OnboardingChat() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8.5rem)] animate-fade-in">
+    <div className="flex flex-col lg:flex-row gap-6 h-auto lg:h-[calc(100vh-8.5rem)] animate-fade-in">
       {/* Left Column: Chat Area */}
-      <div className="glass-panel flex-1 rounded-2xl overflow-hidden flex flex-col justify-between">
+      <div className="glass-panel flex-1 rounded-2xl overflow-hidden flex flex-col justify-between h-[550px] lg:h-full">
         {/* Chat Title bar */}
         <div className="px-6 py-4 border-b border-zinc-900 bg-zinc-900/30 flex items-center justify-between">
           <div className="flex items-center gap-3">

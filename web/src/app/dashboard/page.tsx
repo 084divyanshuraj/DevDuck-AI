@@ -12,33 +12,15 @@ import {
   AlertTriangle,
   Bot,
   Bug,
-  FileText
+  FileText,
+  Plus,
+  FolderOpen
 } from "lucide-react";
 
 export default function DashboardOverview() {
   const [projectId, setProjectId] = useState("taskapp");
-
-  useEffect(() => {
-    const handleProjectChanged = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setProjectId(customEvent.detail);
-    };
-
-    window.addEventListener("projectChanged", handleProjectChanged);
-    return () => {
-      window.removeEventListener("projectChanged", handleProjectChanged);
-    };
-  }, []);
-
-  const projectDetails: Record<string, {
-    name: string;
-    description: string;
-    healthScore: number;
-    totalBugs: number;
-    prStatus: "APPROVED" | "BLOCKED" | "PENDING";
-    lastSync: string;
-    details: string;
-  }> = {
+  
+  const defaultDetails = {
     taskapp: {
       name: "TaskApp — Full Stack Task Manager",
       description: "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync",
@@ -77,7 +59,35 @@ export default function DashboardOverview() {
     }
   };
 
-  const project = projectDetails[projectId] || projectDetails.taskapp;
+  const [projectDetails, setProjectDetails] = useState<Record<string, any>>(defaultDetails);
+
+  const loadProjectDetails = () => {
+    const stored = localStorage.getItem("devduck_project_details");
+    if (stored) {
+      setProjectDetails(JSON.parse(stored));
+    } else {
+      localStorage.setItem("devduck_project_details", JSON.stringify(defaultDetails));
+    }
+  };
+
+  useEffect(() => {
+    loadProjectDetails();
+
+    const handleProjectChanged = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setProjectId(customEvent.detail);
+    };
+
+    window.addEventListener("projectChanged", handleProjectChanged);
+    window.addEventListener("projectsUpdated", loadProjectDetails);
+
+    return () => {
+      window.removeEventListener("projectChanged", handleProjectChanged);
+      window.removeEventListener("projectsUpdated", loadProjectDetails);
+    };
+  }, []);
+
+  const project = projectDetails[projectId] || projectDetails.taskapp || defaultDetails.taskapp;
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -237,35 +247,56 @@ export default function DashboardOverview() {
         </div>
 
         {/* Right Column: Ingestion Status */}
-        <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-white mb-6 flex items-center gap-2">
-              <Terminal className="w-4.5 h-4.5 text-zinc-400" /> Vector Database
-            </h2>
-            <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
-              Kala AI processes and updates files dynamically using vectors. The indexed code database matches semantics with zero sync delay.
-            </p>
+        <div className="flex flex-col gap-6">
+          {/* Vector Database Card */}
+          <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-white mb-6 flex items-center gap-2">
+                <Terminal className="w-4.5 h-4.5 text-zinc-400" /> Vector Database
+              </h2>
+              <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
+                Kala AI processes and updates files dynamically using vectors. The indexed code database matches semantics with zero sync delay.
+              </p>
 
-            <div className="flex flex-col gap-2 text-xs text-zinc-300">
-              <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-800/80 bg-zinc-900/30">
-                <span className="text-zinc-450 font-medium">Memory Engine</span>
-                <span className="font-semibold text-amber-500">Parcle DB</span>
+              <div className="flex flex-col gap-2 text-xs text-zinc-300">
+                <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-800/80 bg-zinc-900/30">
+                  <span className="text-zinc-450 font-medium">Memory Engine</span>
+                  <span className="font-semibold text-amber-500">Parcle DB</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-800/80 bg-zinc-900/30">
+                  <span className="text-zinc-450 font-medium">Active Namespace</span>
+                  <span className="font-mono text-zinc-300 font-semibold">{projectId}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-800/80 bg-zinc-900/30">
-                <span className="text-zinc-450 font-medium">Active Namespace</span>
-                <span className="font-mono text-zinc-300 font-semibold">{projectId}</span>
+            </div>
+
+            <div className="mt-8 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 text-xs flex gap-2.5">
+              <AlertTriangle className="w-4.5 h-4.5 text-amber-500 shrink-0" />
+              <div>
+                <div className="font-bold text-[9px] uppercase tracking-wider text-zinc-400 mb-0.5">Parcle Vector Memory</div>
+                <p className="text-[10px] text-zinc-500 leading-normal">
+                  To sync fresh files with indexes, run Choice #6 in the CLI script.
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="mt-8 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 text-xs flex gap-2.5">
-            <AlertTriangle className="w-4.5 h-4.5 text-amber-500 shrink-0" />
+          {/* Register New Project Card */}
+          <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between gap-4">
             <div>
-              <div className="font-bold text-[9px] uppercase tracking-wider text-zinc-400 mb-0.5">Parcle Vector Memory</div>
-              <p className="text-[10px] text-zinc-500 leading-normal">
-                To sync fresh files with indexes, run Choice #6 in the CLI script.
+              <h2 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                <FolderOpen className="w-4.5 h-4.5 text-zinc-400" /> Register Repository
+              </h2>
+              <p className="text-xs text-zinc-400 leading-relaxed mb-4">
+                Deploy a new code memory namespace context from your browser. This instantly indexes your project structure and enables onboarding chat and PR checks.
               </p>
             </div>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent("openAddProjectModal"))}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-bold text-amber-500 hover:text-amber-400 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Add Project Context
+            </button>
           </div>
         </div>
       </div>

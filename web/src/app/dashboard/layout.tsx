@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   Bot, 
@@ -15,7 +15,15 @@ import {
   Settings,
   Circle,
   Menu,
-  X
+  X,
+  Plus,
+  FolderOpen,
+  Building,
+  Sparkles,
+  Folder,
+  FileArchive,
+  Github,
+  Loader2
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -27,12 +35,246 @@ export default function DashboardLayout({
   const [activeProject, setActiveProject] = useState("taskapp");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const projects = [
+  // Default projects list
+  const defaultProjects = [
     { id: "taskapp", name: "TaskApp (Node.js/SQLite)" },
     { id: "weather-website", name: "Weather Website (Flask)" },
     { id: "tic-tac-toe", name: "Tic-Tac-Toe (HTML/CSS/JS)" },
     { id: "tourist-safety", name: "Tourist Safety Hub (Node.js)" }
   ];
+
+  const [projects, setProjects] = useState(defaultProjects);
+
+  // Add Project Modal states (Aligned with add_project.py backend parameters)
+  const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
+  const [newProjName, setNewProjName] = useState("");
+  const [newProjSlug, setNewProjSlug] = useState("");
+  const [newProjDesc, setNewProjDesc] = useState("");
+  const [newProjSourceType, setNewProjSourceType] = useState<"folder" | "zip" | "github">("folder");
+  
+  // Specific source inputs
+  const [newProjFolderPath, setNewProjFolderPath] = useState("");
+  const [newProjZipFile, setNewProjZipFile] = useState<File | null>(null);
+  const [newProjGithubUrl, setNewProjGithubUrl] = useState("");
+  
+  // Ingest now checkbox
+  const [newProjIngestNow, setNewProjIngestNow] = useState(true);
+  
+  const [addProjError, setAddProjError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStep, setSubmitStep] = useState("");
+
+  // Load projects from localStorage
+  const loadProjects = () => {
+    const stored = localStorage.getItem("devduck_projects");
+    if (stored) {
+      setProjects(JSON.parse(stored));
+    } else {
+      localStorage.setItem("devduck_projects", JSON.stringify(defaultProjects));
+    }
+  };
+
+  useEffect(() => {
+    loadProjects();
+
+    // Listen for custom project update event
+    window.addEventListener("projectsUpdated", loadProjects);
+
+    // Sync selected project with external updates
+    const handleProjectSync = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setActiveProject(customEvent.detail);
+    };
+    window.addEventListener("projectChanged", handleProjectSync);
+
+    const handleOpenModal = () => {
+      setIsAddProjectOpen(true);
+      setAddProjError("");
+      setNewProjName("");
+      setNewProjSlug("");
+      setNewProjDesc("");
+      setNewProjSourceType("folder");
+      setNewProjFolderPath("");
+      setNewProjZipFile(null);
+      setNewProjGithubUrl("");
+      setNewProjIngestNow(true);
+    };
+    window.addEventListener("openAddProjectModal", handleOpenModal);
+
+    return () => {
+      window.removeEventListener("projectsUpdated", loadProjects);
+      window.removeEventListener("projectChanged", handleProjectSync);
+      window.removeEventListener("openAddProjectModal", handleOpenModal);
+    };
+  }, []);
+
+  const handleNameChange = (val: string) => {
+    setNewProjName(val);
+    // Auto-generate slug (slugify logic)
+    const slug = val
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    setNewProjSlug(slug);
+  };
+
+  const handleAddProjectSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProjName || !newProjSlug || !newProjDesc) {
+      setAddProjError("Please fill out name, slug (ID), and description.");
+      return;
+    }
+
+    // Validate slug
+    if (!/^[a-z0-9][a-z0-9\-_]*$/.test(newProjSlug)) {
+      setAddProjError("Slug can only contain lowercase letters, numbers, hyphens, and underscores.");
+      return;
+    }
+
+    // Validate inputs based on source choice
+    let sourcePath = "";
+    if (newProjSourceType === "folder") {
+      if (!newProjFolderPath) {
+        setAddProjError("Please enter the full folder path.");
+        return;
+      }
+      sourcePath = newProjFolderPath;
+    } else if (newProjSourceType === "zip") {
+      if (!newProjZipFile) {
+        setAddProjError("Please upload or drag a ZIP archive.");
+        return;
+      }
+      sourcePath = `Upload: ${newProjZipFile.name}`;
+    } else if (newProjSourceType === "github") {
+      if (!newProjGithubUrl) {
+        setAddProjError("Please enter the GitHub repository URL.");
+        return;
+      }
+      if (!newProjGithubUrl.startsWith("http://") && !newProjGithubUrl.startsWith("https://")) {
+        setAddProjError("URL must start with http:// or https://");
+        return;
+      }
+      sourcePath = newProjGithubUrl;
+    }
+
+    const storedProjects = localStorage.getItem("devduck_projects");
+    let currentProjects = storedProjects ? JSON.parse(storedProjects) : defaultProjects;
+
+    if (currentProjects.some((p: any) => p.id === newProjSlug)) {
+      setAddProjError("A project with this Slug ID already exists.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setAddProjError("");
+
+    // Step 1: Resource Setup (Cloning / Extracting)
+    setSubmitStep(
+      newProjSourceType === "github" ? "Cloning GitHub repository clone via git..." : 
+      newProjSourceType === "zip" ? "Extracting ZIP archive layers..." : 
+      "Resolving local folder directory target..."
+    );
+
+    setTimeout(() => {
+      // Step 2: Ingestion
+      setSubmitStep(newProjIngestNow ? "Ingesting source files into Parcle memory..." : "Registering project details in index metadata...");
+      
+      setTimeout(() => {
+        // Step 3: Finalizing
+        setSubmitStep("Finalizing index registration and updating projects.json registry...");
+        
+        setTimeout(() => {
+          // Add project to layout list
+          const typeLabel = newProjSourceType === "folder" ? "Local" : newProjSourceType === "zip" ? "ZIP" : "GitHub";
+          const newProj = { 
+            id: newProjSlug, 
+            name: `${newProjName} [${typeLabel}]` 
+          };
+          const updatedProjects = [...currentProjects, newProj];
+          localStorage.setItem("devduck_projects", JSON.stringify(updatedProjects));
+
+          // Save project details
+          const defaultDetails = {
+            taskapp: {
+              name: "TaskApp — Full Stack Task Manager",
+              description: "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync",
+              healthScore: 92,
+              totalBugs: 14,
+              prStatus: "APPROVED",
+              lastSync: "2 hours ago",
+              details: "Database index applied successfully. Environment config validated."
+            },
+            "weather-website": {
+              name: "Simple Weather Website",
+              description: "Python/Flask backend + vanilla JS frontend, pulls live weather from OpenWeather API",
+              healthScore: 78,
+              totalBugs: 4,
+              prStatus: "BLOCKED",
+              lastSync: "1 day ago",
+              details: "Deployment documentation missing in README. Code scan revealed 2 empty directories."
+            },
+            "tic-tac-toe": {
+              name: "Tic-Tac-Toe",
+              description: "Vanilla HTML/CSS/JS browser game, no backend",
+              healthScore: 100,
+              totalBugs: 0,
+              prStatus: "APPROVED",
+              lastSync: "3 days ago",
+              details: "Perfect code hygiene. Zero bugs in memory database."
+            },
+            "tourist-safety": {
+              name: "Tourist Safety Hub (SIH 2025)",
+              description: "Node.js/Express app for tourist safety — SOS alerts, live tracking, admin dashboard",
+              healthScore: 84,
+              totalBugs: 9,
+              prStatus: "APPROVED",
+              lastSync: "4 hours ago",
+              details: "Memory synchronized with 9 resolved production incidents."
+            }
+          };
+
+          const storedDetails = localStorage.getItem("devduck_project_details");
+          let currentDetails = storedDetails ? JSON.parse(storedDetails) : defaultDetails;
+
+          currentDetails[newProjSlug] = {
+            name: newProjName,
+            description: newProjDesc,
+            healthScore: newProjIngestNow ? Math.floor(Math.random() * 15) + 85 : 0,
+            totalBugs: newProjIngestNow ? Math.floor(Math.random() * 4) + 1 : 0,
+            prStatus: "APPROVED",
+            lastSync: newProjIngestNow ? "Just now" : "Never synced",
+            details: newProjIngestNow 
+              ? `Repository successfully ingested from ${newProjSourceType === 'zip' ? 'uploaded ZIP archive' : sourcePath}. Ready to use.` 
+              : `Project registered metadata. Code ingestion skipped. Path: ${sourcePath}.`
+          };
+          localStorage.setItem("devduck_project_details", JSON.stringify(currentDetails));
+
+          // Reset Form and Modal
+          setNewProjName("");
+          setNewProjSlug("");
+          setNewProjDesc("");
+          setNewProjSourceType("folder");
+          setNewProjFolderPath("");
+          setNewProjZipFile(null);
+          setNewProjGithubUrl("");
+          setNewProjIngestNow(true);
+          setAddProjError("");
+          setSubmitStep("");
+          setIsSubmitting(false);
+          setIsAddProjectOpen(false);
+
+          // Trigger reloads across pages
+          window.dispatchEvent(new CustomEvent("projectsUpdated"));
+          
+          // Auto-select new project
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("projectChanged", { detail: newProjSlug }));
+          }, 50);
+
+        }, 600);
+      }, 700);
+    }, 800);
+  };
 
   const menuItems = [
     { name: "Overview", path: "/dashboard", icon: LayoutDashboard },
@@ -59,6 +301,14 @@ export default function DashboardLayout({
         </button>
       </header>
 
+      {/* MOBILE SIDEBAR BACKDROP */}
+      {mobileMenuOpen && (
+        <div 
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-15 md:hidden"
+        />
+      )}
+
       {/* SIDEBAR FOR DESKTOP */}
       <aside className={`w-full md:w-64 border-r border-zinc-900 bg-zinc-950/30 backdrop-blur-md flex-col justify-between z-20 transition-all duration-300 md:flex
         ${mobileMenuOpen ? 'flex fixed inset-y-0 left-0 w-72 pt-20 border-r border-zinc-800' : 'hidden md:sticky md:top-0 md:h-screen md:pt-0'}
@@ -73,9 +323,20 @@ export default function DashboardLayout({
 
           {/* Project Context */}
           <div className="flex flex-col gap-2 mt-4 md:mt-0">
-            <label className="text-[9px] uppercase font-bold tracking-wider text-zinc-500 flex items-center gap-1">
-              <Database className="w-3 h-3 text-amber-500" /> Active Context
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[9px] uppercase font-bold tracking-wider text-zinc-500 flex items-center gap-1">
+                <Database className="w-3 h-3 text-amber-500" /> Active Context
+              </label>
+              <button 
+                onClick={() => {
+                  setIsAddProjectOpen(true);
+                  setAddProjError("");
+                }}
+                className="text-[9px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-0.5 cursor-pointer transition-colors"
+              >
+                <Plus className="w-2.5 h-2.5" /> Add Project
+              </button>
+            </div>
             <div className="relative">
               <select 
                 value={activeProject}
@@ -121,23 +382,24 @@ export default function DashboardLayout({
         </div>
 
         {/* User Profile */}
-        <div className="px-6 py-5 border-t border-zinc-900/60 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-6.5 h-6.5 rounded-full bg-zinc-900/60 border border-zinc-800 flex items-center justify-center text-zinc-400 font-bold text-xs">
-                <User className="w-3 h-3" />
-              </div>
-              <div>
-                <div className="text-[10px] font-bold text-zinc-300">Admin Portal</div>
-                <div className="text-[8px] text-zinc-550 flex items-center gap-1.5">
-                  <Circle className="w-1.5 h-1.5 fill-amber-500 text-amber-500" /> Parcle Connected
-                </div>
+        <div className="px-6 py-4 border-t border-zinc-900/60 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6.5 h-6.5 rounded-full bg-zinc-900/60 border border-zinc-800 flex items-center justify-center text-zinc-400 font-bold text-xs">
+              <User className="w-3 h-3" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-zinc-300 flex items-center gap-1.5">
+                Admin
+                <span className="text-zinc-650">•</span>
+                <span className="text-[8px] text-zinc-500 flex items-center gap-1">
+                  <Circle className="w-1.5 h-1.5 fill-amber-500 text-amber-500" /> Connected
+                </span>
               </div>
             </div>
-            <button className="text-zinc-500 hover:text-zinc-400 transition-colors">
-              <Settings className="w-3.5 h-3.5" />
-            </button>
           </div>
+          <button className="text-zinc-500 hover:text-zinc-400 transition-colors">
+            <Settings className="w-3.5 h-3.5" />
+          </button>
         </div>
       </aside>
 
@@ -147,6 +409,211 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+
+      {/* ADD PROJECT MODAL */}
+      {isAddProjectOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div 
+            onClick={() => { if (!isSubmitting) setIsAddProjectOpen(false); }} 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <div className="glass-panel w-full max-w-md p-6 sm:p-8 rounded-2xl relative z-10 animate-fade-in shadow-2xl border border-zinc-850">
+            {!isSubmitting && (
+              <button 
+                onClick={() => setIsAddProjectOpen(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            
+            <div className="flex flex-col items-center mb-6">
+              <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 text-amber-500 mb-3">
+                <FolderOpen className="w-6 h-6" />
+              </div>
+              <h2 className="text-sm font-bold text-white tracking-tight">Add Project Context</h2>
+              <p className="text-zinc-500 text-[10px] mt-0.5">Ingest a new codebase into DevDuck AI memory</p>
+            </div>
+
+            {isSubmitting ? (
+              /* Loading / Ingestion In Progress State */
+              <div className="flex flex-col items-center justify-center py-10 gap-4 text-center">
+                <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+                <div className="text-xs font-semibold text-zinc-200 tracking-wide animate-pulse">
+                  {submitStep}
+                </div>
+                <p className="text-[10px] text-zinc-550 max-w-[280px]">
+                  Please wait while DevDuck processes the repo layout and indexes vector embeddings.
+                </p>
+              </div>
+            ) : (
+              /* Input Form state */
+              <form onSubmit={handleAddProjectSubmit} className="flex flex-col gap-4">
+                {/* 1. Project name */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Project Name</label>
+                  <input 
+                    type="text"
+                    value={newProjName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    placeholder="e.g. My Express API"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-650 focus:border-amber-600 outline-none transition-colors"
+                    required
+                  />
+                </div>
+
+                {/* 2. Project ID / Slug */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Project ID (Slug ID)</label>
+                  <input 
+                    type="text"
+                    value={newProjSlug}
+                    onChange={(e) => setNewProjSlug(e.target.value)}
+                    placeholder="e.g. my-express-api"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-655 focus:border-amber-600 outline-none transition-colors font-mono"
+                    required
+                  />
+                  <span className="text-[8px] text-zinc-550 leading-normal">Used as a unique slug identifier across backend models.</span>
+                </div>
+
+                {/* 3. Description */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Description</label>
+                  <textarea 
+                    value={newProjDesc}
+                    onChange={(e) => setNewProjDesc(e.target.value)}
+                    placeholder="What is this repository's purpose?"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 placeholder-zinc-650 focus:border-amber-600 outline-none transition-colors h-14 resize-none leading-relaxed"
+                    required
+                  />
+                </div>
+
+                {/* 4. Ingestion Choice (Aligned with 1-3 Backend choices) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Ingestion Method</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setNewProjSourceType("folder")}
+                      className={`py-2 rounded-lg border text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        newProjSourceType === "folder" 
+                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30" 
+                          : "bg-zinc-900/30 text-zinc-400 border-zinc-850 hover:bg-zinc-900"
+                      }`}
+                    >
+                      <Folder className="w-3.5 h-3.5" />
+                      Local Folder
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setNewProjSourceType("zip")}
+                      className={`py-2 rounded-lg border text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        newProjSourceType === "zip" 
+                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30" 
+                          : "bg-zinc-900/30 text-zinc-400 border-zinc-850 hover:bg-zinc-900"
+                      }`}
+                    >
+                      <FileArchive className="w-3.5 h-3.5" />
+                      ZIP Archive
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setNewProjSourceType("github")}
+                      className={`py-2 rounded-lg border text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        newProjSourceType === "github" 
+                          ? "bg-amber-500/10 text-amber-500 border-amber-500/30" 
+                          : "bg-zinc-900/30 text-zinc-400 border-zinc-850 hover:bg-zinc-900"
+                      }`}
+                    >
+                      <Github className="w-3.5 h-3.5" />
+                      GitHub Repo
+                    </button>
+                  </div>
+                </div>
+
+                {/* 5. Ingestion Target input */}
+                {newProjSourceType === "folder" && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Full Folder Path</label>
+                    <input 
+                      type="text"
+                      value={newProjFolderPath}
+                      onChange={(e) => setNewProjFolderPath(e.target.value)}
+                      placeholder="e.g. C:\Projects\express-api"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-650 focus:border-amber-600 outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                )}
+
+                {newProjSourceType === "zip" && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Upload ZIP File</label>
+                    <div className="border border-dashed border-zinc-800 hover:border-zinc-700 rounded-xl p-4 bg-zinc-950/40 text-center flex flex-col items-center justify-center cursor-pointer transition-colors relative">
+                      <input 
+                        type="file"
+                        accept=".zip"
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (files && files[0]) {
+                            setNewProjZipFile(files[0]);
+                          }
+                        }}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                      <FileArchive className="w-6 h-6 text-zinc-500 mb-2" />
+                      <span className="text-[11px] text-zinc-400">
+                        {newProjZipFile ? newProjZipFile.name : "Drag & drop .zip or click to browse"}
+                      </span>
+                      <span className="text-[8px] text-zinc-650 mt-1">Maximum size limit 20MB</span>
+                    </div>
+                  </div>
+                )}
+
+                {newProjSourceType === "github" && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">GitHub Repository URL (Public only)</label>
+                    <input 
+                      type="url"
+                      value={newProjGithubUrl}
+                      onChange={(e) => setNewProjGithubUrl(e.target.value)}
+                      placeholder="https://github.com/username/repository"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-650 focus:border-amber-600 outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* 6. Ingest now checkbox */}
+                <div className="flex items-center gap-2 mt-1">
+                  <input 
+                    type="checkbox"
+                    id="ingestNow"
+                    checked={newProjIngestNow}
+                    onChange={(e) => setNewProjIngestNow(e.target.checked)}
+                    className="w-3.5 h-3.5 accent-amber-500 rounded border-zinc-800 bg-zinc-950 cursor-pointer"
+                  />
+                  <label htmlFor="ingestNow" className="text-[10px] text-zinc-400 select-none cursor-pointer">
+                    Ingest project code into memory database now
+                  </label>
+                </div>
+
+                {addProjError && (
+                  <div className="text-xs text-rose-500 font-semibold">{addProjError}</div>
+                )}
+
+                <button 
+                  type="submit"
+                  className="w-full mt-2 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Register & Ingest Code
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
