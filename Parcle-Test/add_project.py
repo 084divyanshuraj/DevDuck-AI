@@ -169,11 +169,89 @@ def prompt_choice():
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Add a new project to DevDuck AI's memory.")
+    parser.add_argument("--cli", action="store_true", help="Run in non-interactive CLI mode")
+    parser.add_argument("--name", help="Display name of the project")
+    parser.add_argument("--slug", help="Project ID (slug) to register")
+    parser.add_argument("--description", default="", help="Short description of the project")
+    parser.add_argument("--source-type", choices=["folder", "zip", "github"], help="Source type")
+    parser.add_argument("--source", help="Path or URL of the source")
+    parser.add_argument("--ingest", choices=["y", "n"], default="n", help="Ingest project code now? (y/n)")
+    
+    args = parser.parse_args()
+
+    registry = load_registry()
+
+    if args.cli:
+        # Non-interactive CLI mode
+        if not args.name or not args.source_type or not args.source:
+            print("ERROR: --name, --source-type, and --source are required in --cli mode.")
+            sys.exit(1)
+
+        project_id = args.slug or slugify(args.name)
+        valid, msg = validate_project_id(project_id, registry)
+        if not valid:
+            print(f"ERROR: {msg}")
+            sys.exit(1)
+
+        display_name = args.name
+        description = args.description
+        source_type = args.source_type
+        raw_source = args.source
+
+        if source_type == "folder":
+            project_path, error = get_local_folder(raw_source)
+        elif source_type == "zip":
+            project_path, error = get_from_zip(raw_source)
+        elif source_type == "github":
+            project_path, error = get_from_github(raw_source)
+        else:
+            error = "Invalid source type"
+
+        if error:
+            print(f"ERROR: {error}")
+            sys.exit(1)
+
+        print(f"PROGRESS: Project source ready at: {project_path}")
+
+        # Update the registry
+        registry[project_id] = {
+            "display_name": display_name,
+            "description": description,
+        }
+        save_registry(registry)
+        print(f"PROGRESS: Registered '{project_id}' in projects.json")
+
+        # Update ingest_all_projects.py's PROJECTS list
+        try:
+            add_to_python_projects_list(project_id, project_path)
+            print(f"PROGRESS: Added '{project_id}' to ingest_all_projects.py's PROJECTS list")
+        except Exception as e:
+            print(f"ERROR: Couldn't auto-update PROJECTS list: {e}")
+            sys.exit(1)
+
+        # Ingest now
+        if args.ingest == "y":
+            print("PROGRESS: Ingesting project code into memory database now...")
+            try:
+                from parcle import Parcle
+                client = Parcle(api_key=os.environ.get("PARCLE_API_KEY"))
+                ingested, skipped, failed = ingest_project(client, project_id, project_path)
+                print(f"PROGRESS: Ingested {ingested} files, skipped {skipped}, failed {failed}.")
+            except Exception as e:
+                print(f"ERROR: Ingestion failed: {e}")
+                sys.exit(1)
+        else:
+            print("PROGRESS: Ingestion skipped as requested.")
+
+        print(f"SUCCESS: {project_id}")
+        return
+
+    # Interactive mode (fallback)
     print("=" * 50)
     print("  ➕ Add a New Project to DevDuck AI")
     print("=" * 50)
-
-    registry = load_registry()
 
     choice = prompt_choice()
 

@@ -29,6 +29,11 @@ export default function ZeroSyncDebugger() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const active = localStorage.getItem("devduck_active_project") || "taskapp";
+      setProjectId(active);
+    }
+
     const handleProjectChanged = (e: Event) => {
       const customEvent = e as CustomEvent;
       setProjectId(customEvent.detail);

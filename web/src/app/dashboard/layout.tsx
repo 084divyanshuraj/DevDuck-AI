@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, setDoc, getDocs, collection } from "firebase/firestore";
+import { auth, db } from "../lib/firebase";
 import { 
   LayoutDashboard, 
   Bot, 
@@ -23,7 +26,8 @@ import {
   Folder,
   FileArchive,
   Github,
-  Loader2
+  Loader2,
+  LogOut
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -32,8 +36,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [activeProject, setActiveProject] = useState("taskapp");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
   // Default projects list
   const defaultProjects = [
@@ -64,18 +71,81 @@ export default function DashboardLayout({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStep, setSubmitStep] = useState("");
 
-  // Load projects from localStorage
-  const loadProjects = () => {
-    const stored = localStorage.getItem("devduck_projects");
-    if (stored) {
-      setProjects(JSON.parse(stored));
-    } else {
-      localStorage.setItem("devduck_projects", JSON.stringify(defaultProjects));
+  // Load projects from GET /api/projects with fallback to localStorage
+  const loadProjects = async () => {
+    let apiProjects: any[] = [];
+    try {
+      const res = await fetch("/api/projects");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          apiProjects = data;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load projects from API:", e);
     }
+
+    let finalProjects = [...apiProjects];
+
+    if (auth.currentUser) {
+      try {
+        const querySnapshot = await getDocs(collection(db, `users/${auth.currentUser.uid}/projects`));
+        const firestoreProjects = querySnapshot.docs.map(docSnapshot => {
+          const data = docSnapshot.data();
+          return {
+            id: docSnapshot.id,
+            name: data.name || docSnapshot.id,
+            description: data.description || ""
+          };
+        });
+
+        // Filter: Only show default public template projects OR projects registered in the current user's Firestore collection.
+        const defaultIds = new Set(defaultProjects.map(p => p.id));
+        const firestoreIds = new Set(firestoreProjects.map(p => p.id));
+        
+        const filteredApiProjects = apiProjects.filter(p => defaultIds.has(p.id) || firestoreIds.has(p.id));
+
+        const projectMap = new Map();
+        [...defaultProjects, ...filteredApiProjects, ...firestoreProjects].forEach(p => {
+          projectMap.set(p.id, p);
+        });
+        finalProjects = Array.from(projectMap.values());
+      } catch (fsErr) {
+        console.error("Failed to fetch user projects from Firestore:", fsErr);
+      }
+    } else {
+      finalProjects = [...defaultProjects];
+    }
+
+
+    setProjects(finalProjects);
+    localStorage.setItem("devduck_projects", JSON.stringify(finalProjects));
   };
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        window.location.href = "/";
+      }
+      setLoadingAuth(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     loadProjects();
+  }, [user]);
+
+  useEffect(() => {
+
+    if (typeof window !== "undefined") {
+      const active = localStorage.getItem("devduck_active_project") || "taskapp";
+      setActiveProject(active);
+    }
 
     // Listen for custom project update event
     window.addEventListener("projectsUpdated", loadProjects);
@@ -84,6 +154,7 @@ export default function DashboardLayout({
     const handleProjectSync = (e: Event) => {
       const customEvent = e as CustomEvent;
       setActiveProject(customEvent.detail);
+      localStorage.setItem("devduck_active_project", customEvent.detail);
     };
     window.addEventListener("projectChanged", handleProjectSync);
 
@@ -110,7 +181,6 @@ export default function DashboardLayout({
 
   const handleNameChange = (val: string) => {
     setNewProjName(val);
-    // Auto-generate slug (slugify logic)
     const slug = val
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -118,7 +188,7 @@ export default function DashboardLayout({
     setNewProjSlug(slug);
   };
 
-  const handleAddProjectSubmit = (e: React.FormEvent) => {
+  const handleAddProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjName || !newProjSlug || !newProjDesc) {
       setAddProjError("Please fill out name, slug (ID), and description.");
@@ -131,19 +201,28 @@ export default function DashboardLayout({
       return;
     }
 
-    // Validate inputs based on source choice
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append("name", newProjName);
+    formData.append("slug", newProjSlug);
+    formData.append("description", newProjDesc);
+    formData.append("sourceType", newProjSourceType);
+    formData.append("ingestNow", newProjIngestNow ? "true" : "false");
+
     let sourcePath = "";
     if (newProjSourceType === "folder") {
       if (!newProjFolderPath) {
         setAddProjError("Please enter the full folder path.");
         return;
       }
+      formData.append("folderPath", newProjFolderPath);
       sourcePath = newProjFolderPath;
     } else if (newProjSourceType === "zip") {
       if (!newProjZipFile) {
         setAddProjError("Please upload or drag a ZIP archive.");
         return;
       }
+      formData.append("zip", newProjZipFile);
       sourcePath = `Upload: ${newProjZipFile.name}`;
     } else if (newProjSourceType === "github") {
       if (!newProjGithubUrl) {
@@ -154,126 +233,140 @@ export default function DashboardLayout({
         setAddProjError("URL must start with http:// or https://");
         return;
       }
+      formData.append("githubUrl", newProjGithubUrl);
       sourcePath = newProjGithubUrl;
-    }
-
-    const storedProjects = localStorage.getItem("devduck_projects");
-    let currentProjects = storedProjects ? JSON.parse(storedProjects) : defaultProjects;
-
-    if (currentProjects.some((p: any) => p.id === newProjSlug)) {
-      setAddProjError("A project with this Slug ID already exists.");
-      return;
     }
 
     setIsSubmitting(true);
     setAddProjError("");
+    setSubmitStep("Initializing request...");
 
-    // Step 1: Resource Setup (Cloning / Extracting)
-    setSubmitStep(
-      newProjSourceType === "github" ? "Cloning GitHub repository clone via git..." : 
-      newProjSourceType === "zip" ? "Extracting ZIP archive layers..." : 
-      "Resolving local folder directory target..."
-    );
-
-    setTimeout(() => {
-      // Step 2: Ingestion
-      setSubmitStep(newProjIngestNow ? "Ingesting source files into Parcle memory..." : "Registering project details in index metadata...");
+    try {
+      setSubmitStep("Sending project details to backend...");
       
-      setTimeout(() => {
-        // Step 3: Finalizing
-        setSubmitStep("Finalizing index registration and updating projects.json registry...");
-        
-        setTimeout(() => {
-          // Add project to layout list
-          const typeLabel = newProjSourceType === "folder" ? "Local" : newProjSourceType === "zip" ? "ZIP" : "GitHub";
-          const newProj = { 
-            id: newProjSlug, 
-            name: `${newProjName} [${typeLabel}]` 
-          };
-          const updatedProjects = [...currentProjects, newProj];
-          localStorage.setItem("devduck_projects", JSON.stringify(updatedProjects));
+      const response = await fetch("/api/projects/add", {
+        method: "POST",
+        body: formData,
+      });
 
-          // Save project details
-          const defaultDetails = {
-            taskapp: {
-              name: "TaskApp — Full Stack Task Manager",
-              description: "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync",
-              healthScore: 92,
-              totalBugs: 14,
-              prStatus: "APPROVED",
-              lastSync: "2 hours ago",
-              details: "Database index applied successfully. Environment config validated."
-            },
-            "weather-website": {
-              name: "Simple Weather Website",
-              description: "Python/Flask backend + vanilla JS frontend, pulls live weather from OpenWeather API",
-              healthScore: 78,
-              totalBugs: 4,
-              prStatus: "BLOCKED",
-              lastSync: "1 day ago",
-              details: "Deployment documentation missing in README. Code scan revealed 2 empty directories."
-            },
-            "tic-tac-toe": {
-              name: "Tic-Tac-Toe",
-              description: "Vanilla HTML/CSS/JS browser game, no backend",
-              healthScore: 100,
-              totalBugs: 0,
-              prStatus: "APPROVED",
-              lastSync: "3 days ago",
-              details: "Perfect code hygiene. Zero bugs in memory database."
-            },
-            "tourist-safety": {
-              name: "Tourist Safety Hub (SIH 2025)",
-              description: "Node.js/Express app for tourist safety — SOS alerts, live tracking, admin dashboard",
-              healthScore: 84,
-              totalBugs: 9,
-              prStatus: "APPROVED",
-              lastSync: "4 hours ago",
-              details: "Memory synchronized with 9 resolved production incidents."
-            }
-          };
+      const result = await response.json();
 
-          const storedDetails = localStorage.getItem("devduck_project_details");
-          let currentDetails = storedDetails ? JSON.parse(storedDetails) : defaultDetails;
+      if (!response.ok || !result.success) {
+        const errorMsg = result.error || "Failed to add project.";
+        setAddProjError(errorMsg);
+        setIsSubmitting(false);
+        if (result.logs) {
+          console.error("Backend execution logs:", result.logs);
+        }
+        return;
+      }
 
-          currentDetails[newProjSlug] = {
+      const backendLogs = result.logs || [];
+      for (const logLine of backendLogs) {
+        if (logLine.includes("PROGRESS:") || logLine.includes("SUCCESS:") || logLine.includes("ERROR:") || logLine.includes("Cloning")) {
+          setSubmitStep(logLine.replace(/^(PROGRESS:|SUCCESS:|ERROR:)\s*/, ""));
+          await new Promise((r) => setTimeout(r, 600));
+        }
+      }
+
+      // Save project details to local storage so dashboard page can display them
+      const defaultDetails = {
+        taskapp: {
+          name: "TaskApp — Full Stack Task Manager",
+          description: "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync",
+          healthScore: 92,
+          totalBugs: 14,
+          prStatus: "APPROVED",
+          lastSync: "2 hours ago",
+          details: "Database index applied successfully. Environment config validated."
+        },
+        "weather-website": {
+          name: "Simple Weather Website",
+          description: "Python/Flask backend + vanilla JS frontend, pulls live weather from OpenWeather API",
+          healthScore: 78,
+          totalBugs: 4,
+          prStatus: "BLOCKED",
+          lastSync: "1 day ago",
+          details: "Deployment documentation missing in README. Code scan revealed 2 empty directories."
+        },
+        "tic-tac-toe": {
+          name: "Tic-Tac-Toe",
+          description: "Vanilla HTML/CSS/JS browser game, no backend",
+          healthScore: 100,
+          totalBugs: 0,
+          prStatus: "APPROVED",
+          lastSync: "3 days ago",
+          details: "Perfect code hygiene. Zero bugs in memory database."
+        },
+        "tourist-safety": {
+          name: "Tourist Safety Hub (SIH 2025)",
+          description: "Node.js/Express app for tourist safety — SOS alerts, live tracking, admin dashboard",
+          healthScore: 84,
+          totalBugs: 9,
+          prStatus: "APPROVED",
+          lastSync: "4 hours ago",
+          details: "Memory synchronized with 9 resolved production incidents."
+        }
+      };
+
+      const storedDetails = localStorage.getItem("devduck_project_details");
+      let currentDetails = storedDetails ? JSON.parse(storedDetails) : defaultDetails;
+
+      currentDetails[newProjSlug] = {
+        name: newProjName,
+        description: newProjDesc,
+        healthScore: newProjIngestNow ? Math.floor(Math.random() * 15) + 85 : 0,
+        totalBugs: newProjIngestNow ? Math.floor(Math.random() * 4) + 1 : 0,
+        prStatus: "APPROVED",
+        lastSync: newProjIngestNow ? "Just now" : "Never synced",
+        details: newProjIngestNow 
+          ? `Repository successfully ingested from ${newProjSourceType === 'zip' ? 'uploaded ZIP archive' : sourcePath}. Ready to use.` 
+          : `Project registered metadata. Code ingestion skipped. Path: ${sourcePath}.`
+      };
+      localStorage.setItem("devduck_project_details", JSON.stringify(currentDetails));
+
+      if (user) {
+        try {
+          await setDoc(doc(db, `users/${user.uid}/projects`, newProjSlug), {
+            id: newProjSlug,
             name: newProjName,
             description: newProjDesc,
-            healthScore: newProjIngestNow ? Math.floor(Math.random() * 15) + 85 : 0,
-            totalBugs: newProjIngestNow ? Math.floor(Math.random() * 4) + 1 : 0,
-            prStatus: "APPROVED",
-            lastSync: newProjIngestNow ? "Just now" : "Never synced",
-            details: newProjIngestNow 
-              ? `Repository successfully ingested from ${newProjSourceType === 'zip' ? 'uploaded ZIP archive' : sourcePath}. Ready to use.` 
-              : `Project registered metadata. Code ingestion skipped. Path: ${sourcePath}.`
-          };
-          localStorage.setItem("devduck_project_details", JSON.stringify(currentDetails));
+            sourceType: newProjSourceType,
+            sourcePath: sourcePath,
+            timestamp: new Date().toISOString()
+          });
+        } catch (fsErr) {
+          console.error("Failed to sync project metadata to Firestore:", fsErr);
+        }
+      }
 
-          // Reset Form and Modal
-          setNewProjName("");
-          setNewProjSlug("");
-          setNewProjDesc("");
-          setNewProjSourceType("folder");
-          setNewProjFolderPath("");
-          setNewProjZipFile(null);
-          setNewProjGithubUrl("");
-          setNewProjIngestNow(true);
-          setAddProjError("");
-          setSubmitStep("");
-          setIsSubmitting(false);
-          setIsAddProjectOpen(false);
+      // Reset Form and Modal
+      setNewProjName("");
+      setNewProjSlug("");
+      setNewProjDesc("");
+      setNewProjSourceType("folder");
+      setNewProjFolderPath("");
+      setNewProjZipFile(null);
+      setNewProjGithubUrl("");
+      setNewProjIngestNow(true);
+      setAddProjError("");
+      setSubmitStep("");
+      setIsSubmitting(false);
+      setIsAddProjectOpen(false);
 
-          // Trigger reloads across pages
-          window.dispatchEvent(new CustomEvent("projectsUpdated"));
-          
-          // Auto-select new project
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("projectChanged", { detail: newProjSlug }));
-          }, 50);
+      // Trigger reloads across pages
+      await loadProjects();
+      window.dispatchEvent(new CustomEvent("projectsUpdated"));
+      
+      // Auto-select new project
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("projectChanged", { detail: newProjSlug }));
+      }, 50);
 
-        }, 600);
-      }, 700);
-    }, 800);
+    } catch (err: any) {
+      setAddProjError(err.message || "Failed to communicate with backend service.");
+      setIsSubmitting(false);
+    }
   };
 
   const menuItems = [
@@ -283,6 +376,15 @@ export default function DashboardLayout({
     { name: "Repo Health & Docs", path: "/dashboard/health", icon: FileCode },
     { name: "PR Reviewer Bot", path: "/dashboard/reviewer", icon: GitPullRequest },
   ];
+
+  if (loadingAuth) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 text-center">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        <div className="text-xs font-semibold text-zinc-450 tracking-wide">Validating session credentials...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-transparent flex flex-col md:flex-row relative">
@@ -342,6 +444,7 @@ export default function DashboardLayout({
                 value={activeProject}
                 onChange={(e) => {
                   setActiveProject(e.target.value);
+                  localStorage.setItem("devduck_active_project", e.target.value);
                   const event = new CustomEvent("projectChanged", { detail: e.target.value });
                   window.dispatchEvent(event);
                 }}
@@ -384,21 +487,24 @@ export default function DashboardLayout({
         {/* User Profile */}
         <div className="px-6 py-4 border-t border-zinc-900/60 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-6.5 h-6.5 rounded-full bg-zinc-900/60 border border-zinc-800 flex items-center justify-center text-zinc-400 font-bold text-xs">
-              <User className="w-3 h-3" />
+            <div className="w-6.5 h-6.5 rounded-full bg-zinc-900/60 border border-zinc-800 flex items-center justify-center text-zinc-400 font-bold text-[10px] uppercase">
+              {user?.displayName ? user.displayName.substring(0, 2) : user?.email ? user.email.substring(0, 2) : "AD"}
             </div>
             <div>
-              <div className="text-[10px] font-bold text-zinc-300 flex items-center gap-1.5">
-                Admin
-                <span className="text-zinc-650">•</span>
-                <span className="text-[8px] text-zinc-500 flex items-center gap-1">
-                  <Circle className="w-1.5 h-1.5 fill-amber-500 text-amber-500" /> Connected
-                </span>
+              <div className="text-[10px] font-bold text-zinc-300 truncate max-w-[120px] flex items-center gap-1.5">
+                {user?.displayName || user?.email || "Developer"}
+              </div>
+              <div className="text-[8px] text-zinc-500 flex items-center gap-1 mt-0.5">
+                <Circle className="w-1.5 h-1.5 fill-amber-500 text-amber-500" /> Active Session
               </div>
             </div>
           </div>
-          <button className="text-zinc-500 hover:text-zinc-400 transition-colors">
-            <Settings className="w-3.5 h-3.5" />
+          <button 
+            onClick={() => signOut(auth)}
+            className="text-zinc-500 hover:text-rose-500 transition-colors p-1.5 rounded-lg hover:bg-zinc-900/50 cursor-pointer"
+            title="Sign Out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
       </aside>

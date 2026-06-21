@@ -6,6 +6,7 @@ load_dotenv()
 
 # ── Add one entry per project: (project_id, folder_path) ──
 PROJECTS = [
+    ("task_bar111_", r"C:\Users\sarra\OneDrive\Desktop\task_bar111"),
     ("weather-website", r"D:\Work\Projects-hack\Simple-Weather-Website--main"),
     ("tic-tac-toe", r"D:\Work\Projects-hack\tic-tac-toe-main"),
     ("tourist-safety", r"D:\Work\Projects-hack\Tourist_Safety_SIH2025-main"),

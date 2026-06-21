@@ -63,15 +63,45 @@ export default function DashboardOverview() {
 
   const loadProjectDetails = () => {
     const stored = localStorage.getItem("devduck_project_details");
-    if (stored) {
-      setProjectDetails(JSON.parse(stored));
-    } else {
-      localStorage.setItem("devduck_project_details", JSON.stringify(defaultDetails));
+    let details = stored ? JSON.parse(stored) : { ...defaultDetails };
+
+    // Self-heal details for projects present in devduck_projects but missing from devduck_project_details
+    const storedProjects = localStorage.getItem("devduck_projects");
+    if (storedProjects) {
+      try {
+        const projectsList = JSON.parse(storedProjects);
+        let updated = false;
+        for (const p of projectsList) {
+          if (p.id && !details[p.id]) {
+            details[p.id] = {
+              name: p.name,
+              description: p.description || "Repository registered in the system.",
+              healthScore: 90,
+              totalBugs: 0,
+              prStatus: "APPROVED",
+              lastSync: "Synced via backend",
+              details: "Repository configuration loaded from projects.json."
+            };
+            updated = true;
+          }
+        }
+        if (updated) {
+          localStorage.setItem("devduck_project_details", JSON.stringify(details));
+        }
+      } catch (e) {
+        console.error("Error healing project details:", e);
+      }
     }
+
+    setProjectDetails(details);
   };
 
   useEffect(() => {
     loadProjectDetails();
+    if (typeof window !== "undefined") {
+      const active = localStorage.getItem("devduck_active_project") || "taskapp";
+      setProjectId(active);
+    }
 
     const handleProjectChanged = (e: Event) => {
       const customEvent = e as CustomEvent;

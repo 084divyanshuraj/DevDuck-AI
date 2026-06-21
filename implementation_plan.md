@@ -1,59 +1,65 @@
-# Implementation Plan - Frontend-Backend Project Ingestion Integration
+# Implementation Plan - Firebase Authentication & Firestore Integration
 
-This plan details the steps to fully connect the DevDuck AI dashboard frontend with the Python backend (`Parcle-Test/add_project.py`). This guarantees zero integration mismatches when adding new codebases (either via local path, zip file upload, or GitHub clone) and keeps all bots in sync.
+This plan details the steps to integrate Firebase Authentication and Firestore into the DevDuck AI dashboard and landing page. This will replace the mock login flow with real user registration, login, session validation, and project sync to the cloud.
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> The backend script runs Python and Git operations. The Next.js development server will execute `python` and `git` commands on your local machine when calls are made to the new API routes. Ensure your local Python environment has the necessary packages (`dotenv`, and `parcle` if you choose to ingest into memory database).
+> - You will need to create a **Firebase Web Project** in the Firebase Console (https://console.firebase.google.com).
+> - Enable **Email/Password** provider (and optionally Google/GitHub) under the **Build > Authentication** section.
+> - Enable **Cloud Firestore** under the **Build > Firestore Database** section.
+> - Add your Firebase SDK keys to your `web/.env.local` file (template provided in the plan).
 
 ---
 
 ## Proposed Changes
 
-### Component 1: Python Backend CLI Enhancements
+### Component 1: Dependency Setup
 
-#### [MODIFY] [add_project.py](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/Parcle-Test/add_project.py)
-We will modify the script to support command-line arguments. If arguments are passed, it runs in non-interactive CLI mode. If no arguments are passed, it falls back to the interactive terminal menu.
-- Arguments supported:
-  - `--cli`: Boolean flag to trigger non-interactive mode.
-  - `--name`: Project display name.
-  - `--slug`: Unique project ID (validated).
-  - `--description`: Short project description.
-  - `--source-type`: Choice of `"folder"`, `"zip"`, or `"github"`.
-  - `--source`: Path/URL.
-  - `--ingest`: Ingest now toggle (`y`/`n`).
-- Ensure clear output printing (e.g. status lines) so the Next.js backend can parse execution stages.
+#### [MODIFY] [package.json](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/web/package.json)
+- Install the official `firebase` npm library.
 
 ---
 
-### Component 2: Next.js API Routes
+### Component 2: Firebase SDK Configuration
 
-#### [NEW] [route.ts](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/web/src/app/api/projects/route.ts)
-A GET endpoint to read `Parcle-Test/projects.json` and return the projects registered on the backend. This ensures the frontend project picker is populated directly from the backend source of truth.
+#### [NEW] [firebase.ts](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/web/src/app/lib/firebase.ts)
+- Initialize Firebase Client App, Authentication (`auth`), and Firestore Database (`db`) using environment variables.
+- Export auth instance and db instance.
 
-#### [NEW] [route.ts](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/web/src/app/api/projects/add/route.ts)
-A POST endpoint that:
-1. Accepts `multipart/form-data` or JSON payloads depending on the selected source type.
-2. If source type is `zip`, writes the file to a temporary location.
-3. Spawns `python Parcle-Test/add_project.py` via `child_process.spawn`.
-4. Streams or returns process log output to the frontend.
-5. Cleans up any temp files.
+#### [NEW] [.env.local](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/web/.env.local)
+- Template environment variables file containing placeholder values for Firebase config:
+  ```env
+  NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain_here
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id_here
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket_here
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id_here
+  NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id_here
+  ```
 
 ---
 
-### Component 3: Frontend Views & Modals
+### Component 3: Landing Page Auth Forms
+
+#### [MODIFY] [page.tsx](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/web/src/app/page.tsx)
+- Connect Sign Up form to Firebase `createUserWithEmailAndPassword`.
+- Connect Sign In form to Firebase `signInWithEmailAndPassword`.
+- Connect Google & GitHub OAuth buttons to Firebase Auth popups.
+- Show clear Firebase auth error messages in the modals.
+
+---
+
+### Component 4: Dashboard Session Guard & Project Sync
 
 #### [MODIFY] [layout.tsx](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/web/src/app/dashboard/layout.tsx)
-- Load active projects list from `GET /api/projects` on component mount instead of `localStorage`.
-- Update `handleAddProjectSubmit` to perform a real `fetch` call to `POST /api/projects/add`.
-- Stream or display stdout logs from the python subprocess in the loader modal in real time.
-- Dispatch the reload event on success.
-
-#### [MODIFY] [page.tsx](file:///c:/Users/sarra/OneDrive/Desktop/DevDuck-AI/web/src/app/dashboard/page.tsx)
-- Update detail loading logic to query project details from the api/registry instead of hardcoded details.
+- Implement an `onAuthStateChanged` listener. If a user is not logged in, redirect them back to `/` (Landing page).
+- Display the logged-in user's name/email in the side bar instead of static "Admin".
+- Implement a functional logout button calling `signOut(auth)`.
+- When adding a project, sync it to **Firestore** under `users/{uid}/projects/{slug}` as well as registering it locally.
+- On dashboard mount, fetch projects registered in Firestore for this user and cache them in local storage.
 
 ---
 
@@ -63,8 +69,8 @@ A POST endpoint that:
 - Run `npm run build` inside `web` folder to ensure clean typescript compilation.
 
 ### Manual Verification
-- Run CLI script options to confirm interactive menu still works: `python devduck.py --setup` and pick option 5.
-- Run frontend UI, trigger "+ Add Project" modal.
-  - Test adding a local folder path. Verify `projects.json` and `ingest_all_projects.py` are updated.
-  - Test cloning a GitHub repo. Verify it is cloned under `Parcle-Test/added_projects/`.
-  - Test uploading a ZIP archive. Verify it is extracted under `Parcle-Test/added_projects/`.
+- Add a valid Firebase credentials block to `web/.env.local` and run `npm run dev`.
+- Attempt to Sign Up with a new email. Verify the user account is created in the Firebase console.
+- Attempt to Login. Verify redirection to dashboard.
+- Create a new project context. Verify it syncs to Firestore in your Firebase Database console.
+- Verify logging out redirects you back to the home page.

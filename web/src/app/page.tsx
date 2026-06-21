@@ -3,6 +3,16 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  GithubAuthProvider, 
+  signInWithPopup, 
+  sendPasswordResetEmail,
+  updateProfile
+} from "firebase/auth";
+import { auth } from "./lib/firebase";
+import { 
   Terminal as TerminalIcon, 
   Bot, 
   Bug, 
@@ -109,19 +119,29 @@ export default function LandingPage() {
   }, [terminalHistory, isTerminalOpen]);
 
   // Social Login handler
-  const handleSocialLogin = (platform: "google" | "github") => {
+  const handleSocialLogin = async (platform: "google" | "github") => {
     setIsSignInSubmitting(true);
     setIsSignUpSubmitting(true);
     setSignInError("");
     setSignUpError("");
-    setTimeout(() => {
+    try {
+      const provider = platform === "google" 
+        ? new GoogleAuthProvider() 
+        : new GithubAuthProvider();
+      await signInWithPopup(auth, provider);
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      console.error(err);
+      const msg = err.message || "Failed to log in with social provider.";
+      setSignInError(msg);
+      setSignUpError(msg);
+    } finally {
       setIsSignInSubmitting(false);
       setIsSignUpSubmitting(false);
-      window.location.href = "/dashboard";
-    }, 1200);
+    }
   };
 
-  const handleSignInSubmit = (e: React.FormEvent) => {
+  const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setSignInError("Please enter your email and password.");
@@ -129,13 +149,18 @@ export default function LandingPage() {
     }
     setIsSignInSubmitting(true);
     setSignInError("");
-    setTimeout(() => {
-      setIsSignInSubmitting(false);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       window.location.href = "/dashboard";
-    }, 1000);
+    } catch (err: any) {
+      console.error(err);
+      setSignInError(err.message || "Incorrect email or password.");
+    } finally {
+      setIsSignInSubmitting(false);
+    }
   };
 
-  const handleSignUpSubmit = (e: React.FormEvent) => {
+  const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !signUpEmail || !signUpPassword || !workspaceName) {
       setSignUpError("Please fill out all fields.");
@@ -147,23 +172,34 @@ export default function LandingPage() {
     }
     setIsSignUpSubmitting(true);
     setSignUpError("");
-    setTimeout(() => {
-      setIsSignUpSubmitting(false);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, signUpEmail, signUpPassword);
+      const user = userCredential.user;
+      await updateProfile(user, { displayName: fullName });
+      localStorage.setItem(`devduck_workspace_${user.uid}`, workspaceName);
       window.location.href = "/dashboard";
-    }, 1000);
+    } catch (err: any) {
+      console.error(err);
+      setSignUpError(err.message || "Failed to create user account.");
+    } finally {
+      setIsSignUpSubmitting(false);
+    }
   };
 
-  const handleResetPasswordSubmit = (e: React.FormEvent) => {
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetEmail) {
       setResetError("Please enter your email address.");
       return;
     }
-    setIsResetSent(true);
     setResetError("");
-    setTimeout(() => {
-      // simulate reset link sending
-    }, 1000);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      setIsResetSent(true);
+    } catch (err: any) {
+      console.error(err);
+      setResetError(err.message || "Failed to send password recovery email.");
+    }
   };
 
   const copyToClipboard = (text: string) => {

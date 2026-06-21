@@ -30,6 +30,17 @@ export default function OnboardingChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const active = localStorage.getItem("devduck_active_project") || "taskapp";
+      setProjectId(active);
+      setMessages([
+        {
+          role: "bot",
+          content: `Hello! I have loaded the memory context for project: ${getProjectName(active)}. Ask me anything about its code structure, config, or features!`,
+        }
+      ]);
+    }
+
     const handleProjectChanged = (e: Event) => {
       const customEvent = e as CustomEvent;
       setProjectId(customEvent.detail);
@@ -152,24 +163,60 @@ export default function OnboardingChat() {
     };
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userText = input;
     setInput("");
 
+    // Add user message instantly
     setMessages(prev => [...prev, { role: "user", content: userText }]);
 
-    setTimeout(() => {
-      const result = getMockAnswer(userText, projectId);
-      setMessages(prev => [...prev, {
-        role: "bot",
-        content: result.answer,
-        citations: result.citations,
-        confidence: result.confidence
-      }]);
-    }, 650);
+    // Add a temporary loader state
+    setMessages(prev => [...prev, { role: "bot", content: "Thinking..." }]);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, question: userText })
+      });
+
+      if (!response.ok) {
+        throw new Error("API error");
+      }
+
+      const result = await response.json();
+      if (result.answer) {
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "bot",
+            content: result.answer,
+            citations: result.citations || [],
+            confidence: result.confidence
+          };
+          return updated;
+        });
+      } else {
+        throw new Error("Execution failed");
+      }
+
+    } catch (err) {
+      console.warn("Real chat backend failed, falling back to mock response.", err);
+      const mockResult = getMockAnswer(userText, projectId);
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "bot",
+          content: mockResult.answer,
+          citations: mockResult.citations,
+          confidence: mockResult.confidence
+        };
+        return updated;
+      });
+    }
   };
 
   return (
