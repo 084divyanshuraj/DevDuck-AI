@@ -5,15 +5,18 @@ from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Every bot expects PARCLE_API_KEY in its environment, but only
-# Parcle-Test/.env actually has it on disk. Load it once here and pass
-# it explicitly to every subprocess below, so it doesn't matter which
-# folder a bot's own load_dotenv() looks in.
-load_dotenv(os.path.join(BASE_DIR, "Parcle-Test", ".env"))
+# Force utf-8 encoding for Windows console to support emojis
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
+# Every bot expects PARCLE_API_KEY in its environment.
+# Load it once here from the root directory and pass it explicitly to 
+# every subprocess below.
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 PARCLE_API_KEY = os.environ.get("PARCLE_API_KEY")
 
 if not PARCLE_API_KEY:
-    print("⚠️  PARCLE_API_KEY not found in Parcle-Test\\.env — bots will fail until this is set.")
+    print("⚠️  PARCLE_API_KEY not found in the root .env file — bots will fail until this is set.")
 
 # Each entry: (menu label, folder relative to repo root, script filename)
 BOTS = {
