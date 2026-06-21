@@ -26,5 +26,9 @@
   "student-placement-predictor": {
     "display_name": "Student Placement Predictor",
     "description": "Student Placement Predictor is a web-based application that predicts a student's placement chances based on academic and skill-related parameters. The system analyzes user inputs and generates placement insights using machine learning techniques. It provides an intuitive interface for students to evaluate their readiness for campus recruitment. The platform also offers personalized feedback and improvement suggestions to help users strengthen their profiles. Designed with a user-friendly interface, it aims to support students in making informed career decisions.\r\n"
+  },
+  "inas1": {
+    "display_name": "inas1",
+    "description": "assignment"
   }
 }
