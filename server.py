@@ -30,12 +30,15 @@ def run_script(script_path, args):
             capture_output=True,
             text=True,
             cwd=os.path.dirname(script_path),
-            env=os.environ.copy()
+            env=os.environ.copy(),
+            timeout=30
         )
         if result.returncode == 0:
             return json.loads(result.stdout)
         else:
             return {"error": result.stderr or f"Exit code {result.returncode}", "success": False}
+    except subprocess.TimeoutExpired:
+        return {"error": "Process timed out after 30 seconds", "success": False}
     except Exception as e:
         return {"error": str(e), "success": False}
 
@@ -112,6 +115,8 @@ def terminal():
     script_path = os.path.join(BASE_DIR, "Parcle-Test", "devduck_run.py")
     
     def generate():
+        import threading
+        
         # Stream the subprocess stdout/stderr in real-time as SSE
         args = [sys.executable, script_path, project_id] + command.split(" ")
         process = subprocess.Popen(
@@ -123,14 +128,24 @@ def terminal():
             env=os.environ.copy()
         )
 
-        for line in iter(process.stdout.readline, ''):
-            yield f'data: {json.dumps({"type": "stdout", "text": line})}\n\n'
-        
-        for line in iter(process.stderr.readline, ''):
-            yield f'data: {json.dumps({"type": "stderr", "text": line})}\n\n'
+        def kill_process():
+            if process.poll() is None:
+                process.kill()
 
-        process.wait()
-        yield f'data: {json.dumps({"type": "exit", "text": str(process.returncode)})}\n\n'
+        timer = threading.Timer(60.0, kill_process)
+        timer.start()
+
+        try:
+            for line in iter(process.stdout.readline, ''):
+                yield f'data: {json.dumps({"type": "stdout", "text": line})}\n\n'
+            
+            for line in iter(process.stderr.readline, ''):
+                yield f'data: {json.dumps({"type": "stderr", "text": line})}\n\n'
+
+            process.wait()
+            yield f'data: {json.dumps({"type": "exit", "text": str(process.returncode)})}\n\n'
+        finally:
+            timer.cancel()
 
     return Response(generate(), mimetype='text/event-stream')
 
