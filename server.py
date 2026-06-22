@@ -5,12 +5,22 @@ import subprocess
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from dotenv import load_dotenv
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, "Parcle-Test", ".env"))
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests from Vercel
+
+# Initialize Rate Limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["100 per day"],
+    storage_uri="memory://"
+)
 
 def run_script(script_path, args):
     """Helper to run a python script and return its JSON stdout"""
@@ -47,6 +57,7 @@ def get_projects():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/architecture', methods=['POST'])
+@limiter.limit("5 per minute")
 def architecture():
     data = request.json
     project_id = data.get("projectId")
@@ -60,6 +71,7 @@ def architecture():
     return jsonify({"error": output.get("error", "Failed to generate diagram")}), 500
 
 @app.route('/api/chat', methods=['POST'])
+@limiter.limit("10 per minute")
 def chat():
     data = request.json
     project_id = data.get("projectId")
@@ -74,6 +86,7 @@ def chat():
     return jsonify(output)
 
 @app.route('/api/terminal', methods=['POST'])
+@limiter.limit("20 per minute")
 def terminal():
     """
     Since Server-Sent Events (SSE) streaming over a cloud proxy is complex,
