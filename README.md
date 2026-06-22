@@ -78,6 +78,13 @@ Open `http://localhost:3000` in your browser. You can instantly register a new p
 
 ---
 
+## 🔮 Future Scope
+While DevDuck AI currently functions as an open, unified ecosystem, we plan to implement robust user authentication in future versions.
+- **GitHub OAuth Integration:** The login buttons in the UI are currently visual placeholders. In our next iteration, we will implement full Firebase Auth with GitHub OAuth to securely tie Parcle `user_id` namespaces to specific developer accounts.
+- **RBAC (Role-Based Access Control):** Allowing team leads to manage which developers can query specific project memories.
+
+---
+
 <div align="center">
   <p>Built with ❤️ by <strong>Team Agentic Coders</strong> for <strong>Quackathon</strong></p>
 </div>
