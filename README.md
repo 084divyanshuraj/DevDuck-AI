@@ -77,5 +77,5 @@ Open `http://localhost:3000` in your browser. You can instantly register a new p
 ---
 
 <div align="center">
-  <p>Built with ❤️ for the Hackathon</p>
+  <p>Built with ❤️ by <strong>Team Agentic Coder</strong> for <strong>Quackathon</strong></p>
 </div>
