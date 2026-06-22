@@ -29,8 +29,8 @@ import subprocess
 import threading
 from dotenv import load_dotenv
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 # Emoji-safe stdout for Windows consoles
 if sys.stdout.encoding != 'utf-8':
