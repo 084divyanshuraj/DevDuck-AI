@@ -13,6 +13,7 @@ import {
   FileCode,
   GitPullRequest,
   Workflow,
+  Terminal,
   ChevronRight,
   Database,
   User,
@@ -273,7 +274,7 @@ export default function DashboardLayout({
       // Save project details to local storage so dashboard page can display them
       const defaultDetails = {
         taskapp: {
-          name: "TaskApp â€” Full Stack Task Manager",
+          name: "TaskApp — Full Stack Task Manager",
           description: "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync",
           healthScore: 92,
           totalBugs: 14,
@@ -301,7 +302,7 @@ export default function DashboardLayout({
         },
         "tourist-safety": {
           name: "Tourist Safety Hub (SIH 2025)",
-          description: "Node.js/Express app for tourist safety â€” SOS alerts, live tracking, admin dashboard",
+          description: "Node.js/Express app for tourist safety — SOS alerts, live tracking, admin dashboard",
           healthScore: 84,
           totalBugs: 9,
           prStatus: "APPROVED",
@@ -377,6 +378,7 @@ export default function DashboardLayout({
     { name: "Repo Health & Docs", path: "/dashboard/health", icon: FileCode },
     { name: "PR Reviewer Bot", path: "/dashboard/reviewer", icon: GitPullRequest },
     { name: "Architecture Map", path: "/dashboard/architecture", icon: Workflow },
+    { name: "Smart Terminal", path: "/dashboard/terminal", icon: Terminal },
   ];
 
   if (loadingAuth) {
