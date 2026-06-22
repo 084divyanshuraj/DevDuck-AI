@@ -80,7 +80,7 @@ Open `http://localhost:3000` in your browser. You can instantly register a new p
 
 ## 🔮 Future Scope
 While DevDuck AI currently functions as an open, unified ecosystem, we plan to implement robust user authentication in future versions.
-- **GitHub OAuth Integration:** The login buttons in the UI are currently visual placeholders. In our next iteration, we will implement full Firebase Auth with GitHub OAuth to securely tie Parcle `user_id` namespaces to specific developer accounts.
+- **Firebase Auth (Temporarily Bypassed):** We initially built and wired up full Firebase Authentication for this project. However, due to a last-minute domain whitelisting issue with our Vercel deployment during the hackathon submission window, we had to temporarily bypass the auth logic and mock the session to ensure judges can still access and test the core DevDuck AI dashboard features. In our next iteration, we will re-enable full Firebase Auth with GitHub OAuth to securely tie Parcle `user_id` namespaces to specific developer accounts.
 - **RBAC (Role-Based Access Control):** Allowing team leads to manage which developers can query specific project memories.
 
 ---
