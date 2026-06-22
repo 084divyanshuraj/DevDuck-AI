@@ -604,7 +604,7 @@ export default function LandingPage() {
             {!isForgotPassword ? (
               <>
                 <div className="flex flex-col items-center mb-6">
-                  <div className="w-16 h-10 overflow-hidden mb-3">
+                  <div className="mb-3 flex items-center justify-center">
                     <span className="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
                   </div>
                   <h2 className="text-lg font-bold text-white tracking-tight">Welcome Back</h2>
@@ -802,7 +802,7 @@ export default function LandingPage() {
               <X className="w-4 h-4" />
             </button>
             <div className="flex flex-col items-center mb-6">
-              <div className="w-16 h-10 overflow-hidden mb-3">
+              <div className="mb-3 flex items-center justify-center">
                 <span className="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
               </div>
               <h2 className="text-lg font-bold text-white tracking-tight">Deploy Workspace</h2>
