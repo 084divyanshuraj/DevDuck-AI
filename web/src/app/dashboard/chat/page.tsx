@@ -26,7 +26,7 @@ export default function OnboardingChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
-      content: "Hello! I am your Kala AI onboarding chatbot. I have fully indexed this codebase's documents and files. What would you like to know about this project?",
+      content: "Hello! I am your DevDuck AI onboarding chatbot. I have fully indexed this codebase's documents and files. What would you like to know about this project?",
     }
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -280,7 +280,7 @@ export default function OnboardingChat() {
               <Bot className="w-4.5 h-4.5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-zinc-200">Kala Assistant</div>
+              <div className="text-xs font-bold text-zinc-200">DevDuck Assistant</div>
               <div className="text-[10px] text-zinc-500">
                 context: <code className="text-zinc-400 font-semibold">{projectId}</code>
               </div>
@@ -302,7 +302,7 @@ export default function OnboardingChat() {
               <div className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold border overflow-hidden
                 ${msg.role === "user" ? "bg-zinc-800 border-zinc-700 text-zinc-450" : "bg-zinc-900/60 border-zinc-800 text-zinc-300"}
               `}>
-                {msg.role === "user" ? "U" : <img src="/kala-logo.png" alt="Kala AI" className="w-5.5 h-5.5 object-contain p-0.5" />}
+                {msg.role === "user" ? "U" : "D"}
               </div>
               
               <div className="flex flex-col gap-1.5">

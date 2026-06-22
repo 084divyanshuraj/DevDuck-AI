@@ -1,4 +1,4 @@
-{
+﻿{
   "taskapp": {
     "display_name": "TaskApp \u2014 Full Stack Task Manager",
     "description": "Node.js/Express + SQLite task management app with JWT auth and WebSocket live sync"
@@ -14,13 +14,5 @@
   "tourist-safety": {
     "display_name": "Tourist Safety Hub (SIH 2025)",
     "description": "Node.js/Express app for tourist safety \u2014 SOS alerts, live tracking, admin dashboard"
-  },
-  "task_bar111_": {
-    "display_name": "task_bar111",
-    "description": "This is a bsaic wesite"
-  },
-  "student-placement-predictor": {
-    "display_name": "Student Placement Predictor",
-    "description": "Student Placement Predictor is a web-based application that predicts a student's placement chances based on academic and skill-related parameters. The system analyzes user inputs and generates placement insights using machine learning techniques."
   }
 }
