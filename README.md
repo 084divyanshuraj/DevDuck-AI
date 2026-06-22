@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="https://i.imgur.com/K3yZ0GZ.png" alt="DevDuck AI Logo" width="120" />
   <h1>DevDuck AI 🦆</h1>
   <p><strong>It takes a new developer 3 weeks to understand a legacy codebase. With DevDuck AI, it takes 3 seconds.</strong></p>
   
