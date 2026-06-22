@@ -457,7 +457,7 @@ export default function LandingPage() {
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
         <Link href="/" className="group">
           <div className="w-36 h-20 relative overflow-hidden transition-all duration-300 flex items-center justify-center">
-            <span class="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
+            <span className="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
           </div>
         </Link>
         
@@ -605,7 +605,7 @@ export default function LandingPage() {
               <>
                 <div className="flex flex-col items-center mb-6">
                   <div className="w-16 h-10 overflow-hidden mb-3">
-                    <span class="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
+                    <span className="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
                   </div>
                   <h2 className="text-lg font-bold text-white tracking-tight">Welcome Back</h2>
                   <p className="text-zinc-550 text-[11px] mt-0.5">Log in to manage your AI codebase index</p>
@@ -803,7 +803,7 @@ export default function LandingPage() {
             </button>
             <div className="flex flex-col items-center mb-6">
               <div className="w-16 h-10 overflow-hidden mb-3">
-                <span class="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
+                <span className="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
               </div>
               <h2 className="text-lg font-bold text-white tracking-tight">Deploy Workspace</h2>
               <p className="text-zinc-550 text-[11px] mt-0.5">Initialize a secure codebase index and developer bots</p>
