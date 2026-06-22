@@ -98,7 +98,7 @@ export default function PRReviewer() {
           <GitPullRequest className="w-5.5 h-5.5 text-zinc-400" /> PR Reviewer Bot
         </h1>
         <p className="text-zinc-400 text-xs max-w-xl">
-          Paste a Pull Request `.diff` or code snippet. Kala AI will review the code lines against the project's historical bug database.
+          Paste a Pull Request `.diff` or code snippet. DevDuck AI will review the code lines against the project's historical bug database.
         </p>
       </div>
 
@@ -205,7 +205,7 @@ export default function PRReviewer() {
 
           {/* Analysis description */}
           <div className="flex flex-col gap-2">
-            <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Kala AI Feedback</h3>
+            <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">DevDuck AI Feedback</h3>
             <div className={`p-4 rounded-xl border text-xs leading-relaxed font-mono bg-zinc-900/40 border-zinc-900 text-zinc-300`}>
               {result.reason}
             </div>

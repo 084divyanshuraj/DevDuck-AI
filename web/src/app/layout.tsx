@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kala AI - Developer Productivity Platform",
+  title: "DevDuck AI - Developer Productivity Platform",
   description: "Your team's private codebase intelligence platform. Get natural-language onboarding answers, AI bug diagnosis, documentation improvements, and automated PR reviews.",
 };
 

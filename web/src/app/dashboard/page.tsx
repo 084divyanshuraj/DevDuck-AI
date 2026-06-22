@@ -285,7 +285,7 @@ export default function DashboardOverview() {
                 <Terminal className="w-4.5 h-4.5 text-zinc-400" /> Vector Database
               </h2>
               <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
-                Kala AI processes and updates files dynamically using vectors. The indexed code database matches semantics with zero sync delay.
+                DevDuck AI processes and updates files dynamically using vectors. The indexed code database matches semantics with zero sync delay.
               </p>
 
               <div className="flex flex-col gap-2 text-xs text-zinc-300">
