@@ -11,6 +11,29 @@ export async function POST(req: NextRequest) {
     }
 
     const scriptPath = path.join(process.cwd(), "../Parcle-Test/generate_diagram.py");
+
+    if (process.env.IS_DEMO_PREVIEW === "true") {
+      // Mock Demo Data for Vercel Live Preview
+      return NextResponse.json({
+        success: true,
+        mermaid: "graph TD\n  Client[Frontend Client] -->|HTTP| API[Next.js API Routes]\n  API -->|Spawn| Python[DevDuck Python Core]\n  Python -->|Query| Parcle[(Parcle Memory Database)]\n  Python -->|Access| LocalFS[Local File System]\n  style Client fill:#1e293b,stroke:#3b82f6\n  style API fill:#1e293b,stroke:#3b82f6\n  style Python fill:#3b82f6,color:#fff\n  style Parcle fill:#f59e0b,color:#000",
+        confidence: 0.99
+      });
+    }
+
+    // Connect to Render Backend if deployed
+    if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/architecture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId })
+      });
+      const data = await res.json();
+      if (!res.ok) return NextResponse.json({ error: data.error }, { status: res.status });
+      return NextResponse.json(data);
+    }
+
+    // Local Fallback
     const scriptDir = path.dirname(scriptPath);
     const args = [scriptPath, projectId];
 

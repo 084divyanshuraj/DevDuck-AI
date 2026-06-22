@@ -4,6 +4,21 @@ import path from "path";
 
 export async function GET() {
   try {
+    if (process.env.IS_DEMO_PREVIEW === "true") {
+      return NextResponse.json([
+        { id: "taskapp", name: "TaskApp - Full Stack Task Manager", description: "Node.js/SQLite Task Manager" },
+        { id: "tic-tac-toe", name: "Tic-Tac-Toe", description: "HTML/CSS/JS game" }
+      ]);
+    }
+
+    // Connect to Render Backend if deployed
+    if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`);
+      const data = await res.json();
+      return NextResponse.json(data);
+    }
+
+    // Local Fallback
     const registryPath = path.join(process.cwd(), "../Parcle-Test/projects.json");
     if (!fs.existsSync(registryPath)) {
       return NextResponse.json([]);
