@@ -2,6 +2,8 @@
   <h1>DevDuck AI 🦆</h1>
   <p><strong>It takes a new developer 3 weeks to understand a legacy codebase. With DevDuck AI, it takes 3 seconds.</strong></p>
   
+  <h3>🌍 <a href="https://dev-duck-ai.vercel.app/">Live Demo</a></h3>
+
   [![Powered by Parcle](https://img.shields.io/badge/Powered_by-Parcle_Memory_API-blue?style=for-the-badge)](https://parcle.io)
   [![Built with Next.js](https://img.shields.io/badge/Built_with-Next.js-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 </div>
