@@ -124,21 +124,10 @@ export default function LandingPage() {
     setIsSignUpSubmitting(true);
     setSignInError("");
     setSignUpError("");
-    try {
-      const provider = platform === "google" 
-        ? new GoogleAuthProvider() 
-        : new GithubAuthProvider();
-      await signInWithPopup(auth, provider);
+    // MOCK AUTH FOR HACKATHON DEMO
+    setTimeout(() => {
       window.location.href = "/dashboard";
-    } catch (err: any) {
-      console.error(err);
-      const msg = err.message || "Failed to log in with social provider.";
-      setSignInError(msg);
-      setSignUpError(msg);
-    } finally {
-      setIsSignInSubmitting(false);
-      setIsSignUpSubmitting(false);
-    }
+    }, 800);
   };
 
   const handleSignInSubmit = async (e: React.FormEvent) => {
@@ -149,15 +138,10 @@ export default function LandingPage() {
     }
     setIsSignInSubmitting(true);
     setSignInError("");
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    // MOCK AUTH FOR HACKATHON DEMO
+    setTimeout(() => {
       window.location.href = "/dashboard";
-    } catch (err: any) {
-      console.error(err);
-      setSignInError(err.message || "Incorrect email or password.");
-    } finally {
-      setIsSignInSubmitting(false);
-    }
+    }, 800);
   };
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
@@ -172,18 +156,11 @@ export default function LandingPage() {
     }
     setIsSignUpSubmitting(true);
     setSignUpError("");
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, signUpEmail, signUpPassword);
-      const user = userCredential.user;
-      await updateProfile(user, { displayName: fullName });
-      localStorage.setItem(`devduck_workspace_${user.uid}`, workspaceName);
+    // MOCK AUTH FOR HACKATHON DEMO
+    localStorage.setItem(`devduck_workspace_mock_demo_user`, workspaceName);
+    setTimeout(() => {
       window.location.href = "/dashboard";
-    } catch (err: any) {
-      console.error(err);
-      setSignUpError(err.message || "Failed to create user account.");
-    } finally {
-      setIsSignUpSubmitting(false);
-    }
+    }, 800);
   };
 
   const handleResetPasswordSubmit = async (e: React.FormEvent) => {
