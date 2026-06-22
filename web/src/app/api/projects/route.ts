@@ -4,6 +4,13 @@ import path from "path";
 
 export async function GET() {
   try {
+    if (process.env.IS_DEMO_PREVIEW === "true") {
+      return NextResponse.json([
+        { id: "taskapp", name: "TaskApp - Full Stack Task Manager", description: "Node.js/SQLite Task Manager" },
+        { id: "tic-tac-toe", name: "Tic-Tac-Toe", description: "HTML/CSS/JS game" }
+      ]);
+    }
+
     const registryPath = path.join(process.cwd(), "../Parcle-Test/projects.json");
     if (!fs.existsSync(registryPath)) {
       return NextResponse.json([]);

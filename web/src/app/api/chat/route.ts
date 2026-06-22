@@ -10,6 +10,15 @@ export async function POST(req: NextRequest) {
     }
 
     const scriptPath = path.join(process.cwd(), "../Parcle-Test/query_project.py");
+    
+    if (process.env.IS_DEMO_PREVIEW === "true") {
+      // Mock Demo Data for Vercel Live Preview
+      return NextResponse.json({
+        answer: "DevDuck uses Parcle's Vector Memory Database to analyze this codebase. I can see that the `index.html` serves as the frontend entry point, and the `app.js` file handles the core logic. To execute a change, I recommend looking at the `initialize()` function on line 42.",
+        confidence: 0.95,
+        citations: ["src/index.html", "src/app.js"]
+      });
+    }
     const scriptDir = path.dirname(scriptPath);
 
     const args = [scriptPath, projectId, question];
