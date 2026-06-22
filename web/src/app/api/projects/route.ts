@@ -11,6 +11,14 @@ export async function GET() {
       ]);
     }
 
+    // Connect to Render Backend if deployed
+    if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`);
+      const data = await res.json();
+      return NextResponse.json(data);
+    }
+
+    // Local Fallback
     const registryPath = path.join(process.cwd(), "../Parcle-Test/projects.json");
     if (!fs.existsSync(registryPath)) {
       return NextResponse.json([]);

@@ -19,6 +19,20 @@ export async function POST(req: NextRequest) {
         citations: ["src/index.html", "src/app.js"]
       });
     }
+
+    // Connect to Render Backend if deployed
+    if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, question })
+      });
+      const data = await res.json();
+      if (!res.ok) return NextResponse.json({ error: data.error }, { status: res.status });
+      return NextResponse.json(data);
+    }
+
+    // Local Fallback
     const scriptDir = path.dirname(scriptPath);
 
     const args = [scriptPath, projectId, question];

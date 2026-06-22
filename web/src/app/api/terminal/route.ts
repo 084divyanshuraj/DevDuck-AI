@@ -40,6 +40,15 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Connect to Render Backend if deployed
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/terminal`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, command })
+    });
+  }
+
   const stream = new ReadableStream({
     start(controller) {
       const args = [scriptPath, projectId, ...command.split(" ")];
