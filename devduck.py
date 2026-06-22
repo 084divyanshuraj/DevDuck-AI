@@ -5,18 +5,15 @@ from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Force utf-8 encoding for Windows console to support emojis
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout.reconfigure(encoding='utf-8')
-
-# Every bot expects PARCLE_API_KEY in its environment.
-# Load it once here from the root directory and pass it explicitly to 
-# every subprocess below.
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+# Every bot expects PARCLE_API_KEY in its environment, but only
+# Parcle-Test/.env actually has it on disk. Load it once here and pass
+# it explicitly to every subprocess below, so it doesn't matter which
+# folder a bot's own load_dotenv() looks in.
+load_dotenv(os.path.join(BASE_DIR, "Parcle-Test", ".env"))
 PARCLE_API_KEY = os.environ.get("PARCLE_API_KEY")
 
 if not PARCLE_API_KEY:
-    print("⚠️  PARCLE_API_KEY not found in the root .env file — bots will fail until this is set.")
+    print("⚠️  PARCLE_API_KEY not found in Parcle-Test\\.env — bots will fail until this is set.")
 
 # Each entry: (menu label, folder relative to repo root, script filename)
 BOTS = {
@@ -30,12 +27,61 @@ BOTS = {
 # than a bot you "chat" with.
 PROJECT_ACTIONS = {
     "5": ("➕ Add a new project", "Parcle-Test", "add_project.py"),
+    "6": ("💻 Smart Terminal (run a command with AI crash detection)", None, None),
 }
 
 SETUP_ACTIONS = {
-    "6": ("Sync bug history into memory (run before #2 / #4 for best results)", "zero-sync-debugger", "ingest_bugs.py"),
-    "7": ("Ingest/re-ingest ALL projects' source code into memory", "Parcle-Test", "ingest_all_projects.py"),
+    "7": ("Sync bug history into memory (run before #2 / #4 for best results)", "zero-sync-debugger", "ingest_bugs.py"),
+    "8": ("Ingest/re-ingest ALL projects' source code into memory", "Parcle-Test", "ingest_all_projects.py"),
 }
+
+
+def run_smart_terminal():
+    """
+    Smart Terminal needs a project_id and a command — collect both
+    interactively then spawn devduck_run.py with the right arguments,
+    preserving the user's actual working directory so relative paths
+    in their command work correctly.
+    """
+    import json
+    registry_path = os.path.join(BASE_DIR, "Parcle-Test", "projects.json")
+    try:
+        with open(registry_path, "r", encoding="utf-8") as f:
+            registry = json.load(f)
+        project_ids = list(registry.keys())
+        print("\nAvailable projects:")
+        for i, pid in enumerate(project_ids, start=1):
+            info = registry[pid]
+            print(f"  {i}. {info.get('display_name', pid)}")
+        while True:
+            choice = input("\nPick a project: ").strip()
+            if choice.isdigit() and 1 <= int(choice) <= len(project_ids):
+                project_id = project_ids[int(choice) - 1]
+                break
+            print("Invalid selection.")
+    except Exception:
+        project_id = input("\nEnter project ID: ").strip()
+
+    command = input("\nEnter the command to run (e.g. npm run build): ").strip()
+    if not command:
+        print("No command entered.")
+        return
+
+    script_path = os.path.join(BASE_DIR, "Parcle-Test", "devduck_run.py")
+    env = os.environ.copy()
+    if PARCLE_API_KEY:
+        env["PARCLE_API_KEY"] = PARCLE_API_KEY
+
+    print(f"\n→ Launching Smart Terminal ...\n")
+    try:
+        subprocess.run(
+            [sys.executable, script_path, project_id] + command.split(),
+            env=env,
+            cwd=os.getcwd(),  # preserve the user's actual working directory
+        )
+    except Exception as e:
+        print(f"\n⚠️  Failed to launch Smart Terminal: {e}\n")
+    print(f"\n← Returned from Smart Terminal\n")
 
 
 def print_menu(show_setup=False):
@@ -102,6 +148,10 @@ def main():
         if choice == "0":
             print("Goodbye!")
             break
+
+        if choice == "6":
+            run_smart_terminal()
+            continue
 
         entry = BOTS.get(choice) or PROJECT_ACTIONS.get(choice) or SETUP_ACTIONS.get(choice)
         if not entry:

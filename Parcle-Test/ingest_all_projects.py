@@ -16,9 +16,7 @@ load_dotenv()
 
 # ── Add one entry per project: (project_id, folder_path) ──
 PROJECTS = [
-    ("student-review", r"D:\DevDuck AI\DevDuck-AI\Parcle-Test\added_projects\Student-Information-system"),
     ("student-placement-predictor", r"C:\DevDuck-AI\Parcle-Test\added_projects\Student-Placement-Predictor"),
-    ("inas1", r"D:\DevDuck AI\DevDuck-AI\Parcle-Test\added_projects\inas1"),
     ("task_bar111_", r"C:\Users\sarra\OneDrive\Desktop\task_bar111"),
     ("weather-website", r"D:\Work\Projects-hack\Simple-Weather-Website--main"),
     ("tic-tac-toe", r"D:\Work\Projects-hack\tic-tac-toe-main"),
