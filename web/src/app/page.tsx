@@ -269,7 +269,7 @@ export default function LandingPage() {
           ...prev,
           "→ Launching Parcle-Test/chat.py ...",
           "",
-          "[Kala AI Assistant] Hello! I've loaded the Parcle context.",
+          "[DevDuck AI Assistant] Hello! I've loaded the Parcle context.",
           "Ask me anything about your project's files (or type 'exit' to return to menu):",
           ""
         ]);
@@ -372,9 +372,9 @@ export default function LandingPage() {
         }
         setTerminalHistory(prev => [
           ...prev,
-          `Kala AI: ${answer}`,
+          `DevDuck AI: ${answer}`,
           "",
-          "[Kala AI Assistant] Enter a question (or type 'exit' to return):",
+          "[DevDuck AI Assistant] Enter a question (or type 'exit' to return):",
           ""
         ]);
       }
@@ -457,7 +457,7 @@ export default function LandingPage() {
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
         <Link href="/" className="group">
           <div className="w-36 h-20 relative overflow-hidden transition-all duration-300 flex items-center justify-center">
-            <img src="/kala-logo.png" alt="Kala AI" className="w-full h-full object-contain" />
+            <span class="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
           </div>
         </Link>
         
@@ -579,7 +579,7 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer className="w-full max-w-7xl mx-auto px-6 py-6 border-t border-zinc-900 text-center text-[11px] text-zinc-500 z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>&copy; {new Date().getFullYear()} Kala AI. All Rights Reserved.</div>
+        <div>&copy; {new Date().getFullYear()} DevDuck AI. All Rights Reserved.</div>
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="hover:text-zinc-300 transition-colors">Console</Link>
           <a href="https://github.com/Parcle-AI/parcle-memory" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">Parcle Memory Engine</a>
@@ -605,7 +605,7 @@ export default function LandingPage() {
               <>
                 <div className="flex flex-col items-center mb-6">
                   <div className="w-16 h-10 overflow-hidden mb-3">
-                    <img src="/kala-logo.png" alt="Kala Logo" className="w-full h-full object-contain" />
+                    <span class="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
                   </div>
                   <h2 className="text-lg font-bold text-white tracking-tight">Welcome Back</h2>
                   <p className="text-zinc-550 text-[11px] mt-0.5">Log in to manage your AI codebase index</p>
@@ -803,7 +803,7 @@ export default function LandingPage() {
             </button>
             <div className="flex flex-col items-center mb-6">
               <div className="w-16 h-10 overflow-hidden mb-3">
-                <img src="/kala-logo.png" alt="Kala Logo" className="w-full h-full object-contain" />
+                <span class="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
               </div>
               <h2 className="text-lg font-bold text-white tracking-tight">Deploy Workspace</h2>
               <p className="text-zinc-550 text-[11px] mt-0.5">Initialize a secure codebase index and developer bots</p>
@@ -1007,7 +1007,7 @@ export default function LandingPage() {
                             ? "text-zinc-500 font-bold" 
                             : line.includes("⚠️") || line.includes("Failed")
                             ? "text-rose-400 font-semibold"
-                            : line.startsWith("Kala AI:") || line.includes("✔")
+                            : line.startsWith("DevDuck AI:") || line.includes("✔")
                             ? "text-amber-500 font-semibold"
                             : "text-zinc-350"
                         }`}

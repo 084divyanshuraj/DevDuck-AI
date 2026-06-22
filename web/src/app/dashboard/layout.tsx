@@ -396,7 +396,7 @@ export default function DashboardLayout({
       <header className="flex md:hidden items-center justify-between px-6 py-4 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md z-30 w-full fixed top-0 left-0">
         <Link href="/" className="flex items-center">
           <div className="w-24 h-12 relative overflow-hidden transition-all duration-300 flex items-center justify-center">
-            <img src="/kala-logo.png" alt="Kala AI Logo" className="w-full h-full object-contain" />
+            <span className="text-lg font-bold text-amber-400 tracking-tight">DevDuck AI</span>
           </div>
         </Link>
         <button
@@ -423,7 +423,7 @@ export default function DashboardLayout({
           {/* Logo */}
           <Link href="/" className="hidden md:flex justify-start -ml-4">
             <div className="w-32 h-16 relative overflow-hidden transition-all duration-300 flex items-center justify-center">
-              <img src="/kala-logo.png" alt="Kala AI Logo" className="w-full h-full object-contain" />
+              <span className="text-lg font-bold text-amber-400 tracking-tight">DevDuck AI</span>
             </div>
           </Link>
 
