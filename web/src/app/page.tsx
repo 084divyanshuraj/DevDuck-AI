@@ -468,8 +468,10 @@ export default function LandingPage() {
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
         <Link href="/" className="group">
           <div className="w-56 h-20 relative overflow-hidden transition-all duration-300 flex items-center justify-start gap-3">
-            <img src="/devduck_logo.png" alt="DevDuck Logo" className="w-12 h-12 object-contain rounded-xl drop-shadow-[0_0_12px_rgba(251,191,36,0.4)]" />
-            <span className="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
+            <img src="/devduck_logo.png" alt="DevDuck Logo" className="w-12 h-12 object-contain rounded-xl" />
+            <span className="text-2xl font-bold tracking-tight">
+              <span className="text-amber-400">DevDuck</span> <span className="text-white">AI</span>
+            </span>
           </div>
         </Link>
         
