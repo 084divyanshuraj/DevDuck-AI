@@ -28,7 +28,10 @@ import {
   Database,
   Building,
   Mail,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff,
+  User
 } from "lucide-react";
 
 const MENU_TEXT = `==================================================
@@ -85,6 +88,7 @@ export default function LandingPage() {
   // Sign In states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [signInError, setSignInError] = useState("");
   const [isSignInSubmitting, setIsSignInSubmitting] = useState(false);
@@ -93,6 +97,7 @@ export default function LandingPage() {
   const [fullName, setFullName] = useState("");
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [signUpError, setSignUpError] = useState("");
@@ -597,9 +602,9 @@ export default function LandingPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div 
             onClick={() => setIsSignInOpen(false)} 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-backdrop-fade"
           />
-          <div className="glass-panel w-full max-w-md p-6 sm:p-8 rounded-2xl relative z-10 animate-fade-in shadow-2xl border border-zinc-850">
+          <div className="glass-panel w-full max-w-md p-6 sm:p-8 rounded-2xl relative z-10 animate-modal-enter shadow-2xl border border-zinc-850">
             <button 
               onClick={() => setIsSignInOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
@@ -609,12 +614,12 @@ export default function LandingPage() {
 
             {!isForgotPassword ? (
               <>
-                <div className="flex flex-col items-center mb-6">
-                  <div className="mb-3 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
+                <div className="flex flex-col items-center mb-8">
+                  <div className="mb-3 flex items-center justify-center gap-2">
+                    <span className="text-3xl font-black tracking-tight text-gradient-gold">DevDuck AI</span>
                   </div>
-                  <h2 className="text-lg font-bold text-white tracking-tight">Welcome Back</h2>
-                  <p className="text-zinc-550 text-[11px] mt-0.5">Log in to manage your AI codebase index</p>
+                  <h2 className="text-xs font-semibold text-zinc-350 tracking-wider uppercase">Welcome Back</h2>
+                  <p className="text-zinc-500 text-[10px] mt-1 font-medium tracking-wide text-center">Securely manage your developer index & codebase bots</p>
                 </div>
 
                 {/* Social Login buttons */}
@@ -623,26 +628,15 @@ export default function LandingPage() {
                     type="button" 
                     onClick={() => handleSocialLogin("google")}
                     disabled={isSignInSubmitting}
-                    className="w-full py-2.5 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-3 rounded-xl border border-zinc-800/80 bg-zinc-950 hover:bg-zinc-900/40 hover:border-amber-500/30 text-zinc-200 hover:text-white font-semibold text-xs transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 shadow-inner group"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
                       <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.68 1.54 14.98 1 12 1 7.35 1 3.37 3.65 1.42 7.54l3.83 2.97C6.18 7.36 8.87 5.04 12 5.04z" />
                       <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.42 3.58v2.97h3.91c2.28-2.1 3.54-5.19 3.54-8.7z" />
                       <path fill="#FBBC05" d="M5.25 14.54c-.24-.72-.37-1.49-.37-2.27s.13-1.55.37-2.27L1.42 7.54C.52 9.33 0 11.24 0 13.27s.52 3.94 1.42 5.73l3.83-2.97z" />
                       <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.92l-3.91-2.97c-1.09.73-2.48 1.17-4.05 1.17-3.13 0-5.82-2.32-6.75-5.47L1.42 15.73C3.37 19.62 7.35 23 12 23z" />
                     </svg>
                     Continue with Google
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => handleSocialLogin("github")}
-                    disabled={isSignInSubmitting}
-                    className="w-full py-2.5 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.137 20.162 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
-                    </svg>
-                    Continue with GitHub
                   </button>
                 </div>
 
@@ -655,20 +649,24 @@ export default function LandingPage() {
 
                 <form onSubmit={handleSignInSubmit} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Email Address</label>
-                    <input 
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@company.com"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none transition-colors"
-                      required
-                    />
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Email Address</label>
+                    <div className="relative flex items-center">
+                      <Mail className="w-4 h-4 text-zinc-550 absolute left-4 pointer-events-none" />
+                      <input 
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="name@company.com"
+                        autoComplete="off"
+                        className="premium-input w-full bg-zinc-950/60 border border-zinc-800/80 rounded-xl pl-11 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Password</label>
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Password</label>
                       <button 
                         type="button" 
                         onClick={() => setIsForgotPassword(true)}
@@ -677,14 +675,25 @@ export default function LandingPage() {
                         Forgot password?
                       </button>
                     </div>
-                    <input 
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none transition-colors"
-                      required
-                    />
+                    <div className="relative flex items-center">
+                      <Lock className="w-4 h-4 text-zinc-550 absolute left-4 pointer-events-none" />
+                      <input 
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        autoComplete="new-password"
+                        className="premium-input w-full bg-zinc-950/60 border border-zinc-800/80 rounded-xl pl-11 pr-11 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 p-1 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/60 transition-all cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Remember Me */}
@@ -708,10 +717,19 @@ export default function LandingPage() {
                   <button 
                     type="submit"
                     disabled={isSignInSubmitting}
-                    className="w-full mt-2 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-zinc-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 disabled:from-zinc-800 disabled:to-zinc-850 disabled:opacity-50 text-white font-bold text-xs transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-amber-900/10"
                   >
-                    {isSignInSubmitting ? "Signing in..." : "Continue to Console"}
-                    <ChevronRight className="w-4 h-4" />
+                    {isSignInSubmitting ? (
+                      <>
+                        <div className="spinner-gradient w-4 h-4 animate-spin" />
+                        <span>Signing in...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Continue to Console</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </form>
 
@@ -744,15 +762,18 @@ export default function LandingPage() {
                 {!isResetSent ? (
                   <form onSubmit={handleResetPasswordSubmit} className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Email Address</label>
-                      <input 
-                        type="email"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        placeholder="name@company.com"
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none transition-colors"
-                        required
-                      />
+                      <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Email Address</label>
+                      <div className="relative flex items-center">
+                        <Mail className="w-4 h-4 text-zinc-550 absolute left-4 pointer-events-none" />
+                        <input 
+                          type="email"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                          placeholder="name@company.com"
+                          className="premium-input w-full bg-zinc-950/60 border border-zinc-800/80 rounded-xl pl-11 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none"
+                          required
+                        />
+                      </div>
                     </div>
 
                     {resetError && (
@@ -761,7 +782,7 @@ export default function LandingPage() {
 
                     <button 
                       type="submit"
-                      className="w-full mt-2 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-amber-900/10"
                     >
                       Send Password Recovery Link
                       <ArrowRight className="w-4 h-4" />
@@ -798,9 +819,9 @@ export default function LandingPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div 
             onClick={() => setIsSignUpOpen(false)} 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-backdrop-fade"
           />
-          <div className="glass-panel w-full max-w-md p-6 sm:p-8 rounded-2xl relative z-10 animate-fade-in shadow-2xl border border-zinc-850">
+          <div className="glass-panel w-full max-w-md p-6 sm:p-8 rounded-2xl relative z-10 animate-modal-enter shadow-2xl border border-zinc-850">
             <button 
               onClick={() => setIsSignUpOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
@@ -809,10 +830,10 @@ export default function LandingPage() {
             </button>
             <div className="flex flex-col items-center mb-6">
               <div className="mb-3 flex items-center justify-center">
-                <span className="text-2xl font-bold text-amber-400 tracking-tight">DevDuck AI</span>
+                <span className="text-3xl font-black tracking-tight text-gradient-gold">DevDuck AI</span>
               </div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Deploy Workspace</h2>
-              <p className="text-zinc-550 text-[11px] mt-0.5">Initialize a secure codebase index and developer bots</p>
+              <h2 className="text-xs font-semibold text-zinc-350 tracking-wider uppercase">Deploy Workspace</h2>
+              <p className="text-zinc-500 text-[10px] mt-1 font-medium tracking-wide text-center">Initialize a secure codebase index and developer bots</p>
             </div>
 
             {/* Social Logins */}
@@ -821,9 +842,9 @@ export default function LandingPage() {
                 type="button" 
                 onClick={() => handleSocialLogin("google")}
                 disabled={isSignUpSubmitting}
-                className="w-full py-2.5 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 rounded-xl border border-zinc-800/80 bg-zinc-950 hover:bg-zinc-900/40 hover:border-amber-500/30 text-zinc-200 hover:text-white font-semibold text-xs transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 shadow-inner group"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
                   <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.68 1.54 14.98 1 12 1 7.35 1 3.37 3.65 1.42 7.54l3.83 2.97C6.18 7.36 8.87 5.04 12 5.04z" />
                   <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.42 3.58v2.97h3.91c2.28-2.1 3.54-5.19 3.54-8.7z" />
                   <path fill="#FBBC05" d="M5.25 14.54c-.24-.72-.37-1.49-.37-2.27s.13-1.55.37-2.27L1.42 7.54C.52 9.33 0 11.24 0 13.27s.52 3.94 1.42 5.73l3.83-2.97z" />
@@ -831,76 +852,85 @@ export default function LandingPage() {
                 </svg>
                 Sign up with Google
               </button>
-              <button 
-                type="button" 
-                onClick={() => handleSocialLogin("github")}
-                disabled={isSignUpSubmitting}
-                className="w-full py-2.5 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.137 20.162 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
-                </svg>
-                Sign up with GitHub
-              </button>
             </div>
 
             {/* Divider */}
             <div className="flex items-center my-4">
               <div className="flex-grow h-[1px] bg-zinc-900" />
-              <span className="px-3 text-[9px] font-bold text-zinc-655 uppercase tracking-widest">or register email</span>
+              <span className="px-3 text-[9px] font-bold text-zinc-650 uppercase tracking-widest">or register email</span>
               <div className="flex-grow h-[1px] bg-zinc-900" />
             </div>
             
             <form onSubmit={handleSignUpSubmit} className="flex flex-col gap-3.5">
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Full Name</label>
-                <input 
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Alex Rivera"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none transition-colors"
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Workspace / Team Name</label>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Full Name</label>
                 <div className="relative flex items-center">
-                  <Building className="w-3.5 h-3.5 text-zinc-550 absolute left-3.5" />
+                  <User className="w-4 h-4 text-zinc-550 absolute left-4 pointer-events-none" />
                   <input 
                     type="text"
-                    value={workspaceName}
-                    onChange={(e) => setWorkspaceName(e.target.value)}
-                    placeholder="my-cool-project"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none transition-colors"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Alex Rivera"
+                    autoComplete="off"
+                    className="premium-input w-full bg-zinc-950/60 border border-zinc-800/80 rounded-xl pl-11 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none"
                     required
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Work Email</label>
-                <input 
-                  type="email"
-                  value={signUpEmail}
-                  onChange={(e) => setSignUpEmail(e.target.value)}
-                  placeholder="alex@company.com"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none transition-colors"
-                  required
-                />
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Workspace / Team Name</label>
+                <div className="relative flex items-center">
+                  <Building className="w-4 h-4 text-zinc-550 absolute left-4 pointer-events-none" />
+                  <input 
+                    type="text"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    placeholder="my-cool-project"
+                    autoComplete="off"
+                    className="premium-input w-full bg-zinc-950/60 border border-zinc-800/80 rounded-xl pl-11 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Password</label>
-                <input 
-                  type="password"
-                  value={signUpPassword}
-                  onChange={(e) => setSignUpPassword(e.target.value)}
-                  placeholder="Min. 8 characters"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none transition-colors"
-                  required
-                />
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Work Email</label>
+                <div className="relative flex items-center">
+                  <Mail className="w-4 h-4 text-zinc-550 absolute left-4 pointer-events-none" />
+                  <input 
+                    type="email"
+                    value={signUpEmail}
+                    onChange={(e) => setSignUpEmail(e.target.value)}
+                    placeholder="alex@company.com"
+                    autoComplete="off"
+                    className="premium-input w-full bg-zinc-950/60 border border-zinc-800/80 rounded-xl pl-11 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Password</label>
+                <div className="relative flex items-center">
+                  <Lock className="w-4 h-4 text-zinc-550 absolute left-4 pointer-events-none" />
+                  <input 
+                    type={showSignUpPassword ? "text" : "password"}
+                    value={signUpPassword}
+                    onChange={(e) => setSignUpPassword(e.target.value)}
+                    placeholder="Min. 8 characters"
+                    autoComplete="new-password"
+                    className="premium-input w-full bg-zinc-950/60 border border-zinc-800/80 rounded-xl pl-11 pr-11 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-amber-600 outline-none"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                    className="absolute right-4 p-1 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/60 transition-all cursor-pointer"
+                  >
+                    {showSignUpPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {/* Terms Checkbox */}
@@ -930,10 +960,19 @@ export default function LandingPage() {
               <button 
                 type="submit"
                 disabled={isSignUpSubmitting}
-                className="w-full mt-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-zinc-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 disabled:from-zinc-800 disabled:to-zinc-850 disabled:opacity-50 text-white font-bold text-xs transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-amber-900/10"
               >
-                {isSignUpSubmitting ? "Creating workspace..." : "Deploy Workspace Now"}
-                <ChevronRight className="w-4 h-4" />
+                {isSignUpSubmitting ? (
+                  <>
+                    <div className="spinner-gradient w-4 h-4 animate-spin" />
+                    <span>Creating workspace...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Deploy Workspace Now</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
 
