@@ -1,5 +1,6 @@
 <div align="center">
-  <h1>DevDuck AI 🦆</h1>
+  <img src="web/public/devduck_logo.png" alt="DevDuck AI Logo" width="120" style="border-radius: 20px; margin-bottom: 15px;" />
+  <h1>DevDuck AI</h1>
   <p><strong>It takes a new developer 3 weeks to understand a legacy codebase. With DevDuck AI, it takes 3 seconds.</strong></p>
   
   <h3>🌍 <a href="https://dev-duck-ai.vercel.app/">Live Demo</a></h3>
@@ -17,6 +18,9 @@ Codebases get messy. Knowledge is lost when senior developers leave the team. Wh
 **DevDuck AI** is a unified, persistent AI ecosystem that acts as a 24/7 senior engineer. It doesn't just "read" your code—it uses **Parcle's Vector Memory Database** to ingest your entire repository, remember every past bug, and monitor every command you run in the terminal.
 
 It is your omniscient co-developer.
+
+### 🧠 The Sentient Workspace Philosophy
+DevDuck isn't just a chatbot; it's a **Sentient Workspace**. By seamlessly integrating with your IDE and terminal, DevDuck achieves "Zero-Sync Debugging"—cross-referencing real-time stack traces against historical commits and verified bug resolutions to automatically recommend exact line fixes.
 
 ---
 
