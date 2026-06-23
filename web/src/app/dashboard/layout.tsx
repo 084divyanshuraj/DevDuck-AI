@@ -404,8 +404,11 @@ export default function DashboardLayout({
       {/* MOBILE HEADER */}
       <header className="flex md:hidden items-center justify-between px-6 py-4 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md z-30 w-full fixed top-0 left-0">
         <Link href="/" className="flex items-center">
-          <div className="w-24 h-12 relative overflow-hidden transition-all duration-300 flex items-center justify-center">
-            <span className="text-lg font-bold text-amber-400 tracking-tight">DevDuck AI</span>
+          <div className="h-12 relative overflow-hidden transition-all duration-300 flex items-center justify-start gap-2">
+            <img src="/devduck_logo.png" alt="DevDuck Logo" className="w-8 h-8 object-contain rounded-lg" />
+            <span className="text-lg font-bold tracking-tight">
+              <span className="text-amber-400">DevDuck</span> <span className="text-white">AI</span>
+            </span>
           </div>
         </Link>
         <button
@@ -431,8 +434,11 @@ export default function DashboardLayout({
         <div className="px-6 py-6 flex flex-col gap-6">
           {/* Logo */}
           <Link href="/" className="hidden md:flex justify-start -ml-4">
-            <div className="w-32 h-16 relative overflow-hidden transition-all duration-300 flex items-center justify-center">
-              <span className="text-lg font-bold text-amber-400 tracking-tight">DevDuck AI</span>
+            <div className="w-48 h-16 relative overflow-hidden transition-all duration-300 flex items-center justify-start gap-2.5 pl-4">
+              <img src="/devduck_logo.png" alt="DevDuck Logo" className="w-10 h-10 object-contain rounded-lg" />
+              <span className="text-lg font-bold tracking-tight">
+                <span className="text-amber-400">DevDuck</span> <span className="text-white">AI</span>
+              </span>
             </div>
           </Link>
 
