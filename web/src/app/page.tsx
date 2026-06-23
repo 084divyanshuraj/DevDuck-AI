@@ -98,6 +98,8 @@ export default function LandingPage() {
   const [signUpError, setSignUpError] = useState("");
   const [isSignUpSubmitting, setIsSignUpSubmitting] = useState(false);
 
+
+
   // Terminal simulator states
   const [terminalTab, setTerminalTab] = useState<"cli" | "install">("cli");
   const [terminalHistory, setTerminalHistory] = useState<string[]>([
@@ -124,10 +126,28 @@ export default function LandingPage() {
     setIsSignUpSubmitting(true);
     setSignInError("");
     setSignUpError("");
-    // MOCK AUTH FOR HACKATHON DEMO
-    setTimeout(() => {
+    try {
+      let provider;
+      if (platform === "google") {
+        provider = new GoogleAuthProvider();
+        provider.setCustomParameters({
+          prompt: "select_account"
+        });
+      } else {
+        provider = new GithubAuthProvider();
+      }
+      await signInWithPopup(auth, provider);
       window.location.href = "/dashboard";
-    }, 800);
+    } catch (err: any) {
+      console.error(`${platform} authentication failed:`, err);
+      const friendlyMsg = err.code === "auth/popup-closed-by-user"
+        ? "Sign-in popup closed before completion. Please try again."
+        : `Authentication failed (${err.code || err.message}). Please check configuration.`;
+      setSignInError(friendlyMsg);
+      setSignUpError(friendlyMsg);
+      setIsSignInSubmitting(false);
+      setIsSignUpSubmitting(false);
+    }
   };
 
   const handleSignInSubmit = async (e: React.FormEvent) => {
@@ -138,10 +158,14 @@ export default function LandingPage() {
     }
     setIsSignInSubmitting(true);
     setSignInError("");
-    // MOCK AUTH FOR HACKATHON DEMO
-    setTimeout(() => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       window.location.href = "/dashboard";
-    }, 800);
+    } catch (err: any) {
+      console.error("Email sign in failed:", err);
+      setSignInError(`Authentication failed (${err.code || err.message}). Please check credentials.`);
+      setIsSignInSubmitting(false);
+    }
   };
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
@@ -156,11 +180,16 @@ export default function LandingPage() {
     }
     setIsSignUpSubmitting(true);
     setSignUpError("");
-    // MOCK AUTH FOR HACKATHON DEMO
-    localStorage.setItem(`devduck_workspace_mock_demo_user`, workspaceName);
-    setTimeout(() => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, signUpEmail, signUpPassword);
+      await updateProfile(userCredential.user, { displayName: fullName });
+      localStorage.setItem(`devduck_workspace_${userCredential.user.uid}`, workspaceName);
       window.location.href = "/dashboard";
-    }, 800);
+    } catch (err: any) {
+      console.error("Email sign up failed:", err);
+      setSignUpError(`Registration failed (${err.code || err.message}).`);
+      setIsSignUpSubmitting(false);
+    }
   };
 
   const handleResetPasswordSubmit = async (e: React.FormEvent) => {

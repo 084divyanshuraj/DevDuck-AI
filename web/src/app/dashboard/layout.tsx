@@ -126,10 +126,6 @@ export default function DashboardLayout({
   };
 
   useEffect(() => {
-    // MOCK AUTH FOR DEMO
-    setUser({ uid: "mock_demo_user", displayName: "Demo User", email: "demo@devduck.ai" });
-    setLoadingAuth(false);
-    /*
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -140,7 +136,6 @@ export default function DashboardLayout({
     });
 
     return () => unsubscribe();
-    */
   }, []);
 
   useEffect(() => {
@@ -376,6 +371,15 @@ export default function DashboardLayout({
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.error("Sign out failed:", e);
+    }
+    window.location.href = "/";
+  };
+
   const menuItems = [
     { name: "Overview", path: "/dashboard", icon: LayoutDashboard },
     { name: "Onboarding Chat", path: "/dashboard/chat", icon: Bot },
@@ -509,7 +513,7 @@ export default function DashboardLayout({
             </div>
           </div>
           <button
-            onClick={() => signOut(auth)}
+            onClick={handleSignOut}
             className="text-zinc-500 hover:text-rose-500 transition-colors p-1.5 rounded-lg hover:bg-zinc-900/50 cursor-pointer"
             title="Sign Out"
           >

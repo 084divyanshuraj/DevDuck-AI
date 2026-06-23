@@ -85,6 +85,35 @@ def extract_mermaid(raw_text):
     if not text.startswith(valid_starts):
         return None
 
+    # Fix invalid dotted link with text syntax:
+    # Node1 -. label .- Node2 => Node1 -.-|label| Node2
+    # Node1 -. label .-> Node2 => Node1 -.->|label| Node2
+    def fix_dotted_links(m):
+        node1 = m.group(1)
+        label = m.group(2).strip()
+        has_arrow = m.group(3) == ">"
+        node2 = m.group(4)
+        if has_arrow:
+            return f'{node1} -.->|{label}| {node2}'
+        else:
+            return f'{node1} -.-|{label}| {node2}'
+
+    text = re.sub(
+        r'(\w+)\s*-\.\s*([^|.-]+?)\s*\.-\s*(>?)\s*(\w+)',
+        fix_dotted_links,
+        text
+    )
+
+    # Wrap all edge labels in double quotes to prevent syntax errors on colons/special characters
+    def quote_label(m):
+        label = m.group(1).strip()
+        if label.startswith('"') and label.endswith('"'):
+            return f'|{label}|'
+        label = label.replace('"', '\\"')
+        return f'|"{label}"|'
+
+    text = re.sub(r'\|([^|]+)\|', quote_label, text)
+
     return text
 
 
