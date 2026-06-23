@@ -9,7 +9,8 @@ import {
   GithubAuthProvider, 
   signInWithPopup, 
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  onAuthStateChanged
 } from "firebase/auth";
 import { auth } from "./lib/firebase";
 import { 
@@ -78,6 +79,11 @@ export default function LandingPage() {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [isMotiveOpen, setIsMotiveOpen] = useState(false);
+
+  // Auth User state
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
   // Password Recovery Toggle
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -118,6 +124,26 @@ export default function LandingPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoadingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleAuthLinkClick = (e: React.MouseEvent, destination: string) => {
+    e.preventDefault();
+    if (currentUser) {
+      window.location.href = destination;
+    } else {
+      setSignInError("Authentication required. Please sign in to access the Console and agents.");
+      setIsSignInOpen(true);
+      setIsForgotPassword(false);
+      setIsResetSent(false);
+    }
+  };
 
   useEffect(() => {
     if (isTerminalOpen) {
@@ -474,6 +500,12 @@ export default function LandingPage() {
         
         <div className="flex items-center gap-4">
           <button 
+            onClick={() => setIsMotiveOpen(true)}
+            className="px-4 py-2 rounded-xl text-xs font-semibold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all duration-300 cursor-pointer"
+          >
+            Explore
+          </button>
+          <button 
             onClick={() => {
               setIsSignInOpen(true);
               setIsForgotPassword(false);
@@ -485,9 +517,10 @@ export default function LandingPage() {
           </button>
           <Link 
             href="/dashboard" 
+            onClick={(e) => handleAuthLinkClick(e, "/dashboard")}
             className="flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white transition-all duration-300"
           >
-            Open Console <ChevronRight className="w-4 h-4" />
+            go to Home <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
       </header>
@@ -533,7 +566,11 @@ export default function LandingPage() {
                 Let new developers ask natural-language questions about any project and get instant, cited answers directly from the code.
               </p>
             </div>
-            <Link href="/dashboard/chat" className="mt-6 flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors">
+            <Link 
+              href="/dashboard/chat" 
+              onClick={(e) => handleAuthLinkClick(e, "/dashboard/chat")} 
+              className="mt-6 flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors"
+            >
               Open Chatbot <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -549,7 +586,11 @@ export default function LandingPage() {
                 Describe a current bug or paste a console stack trace to cross-reference similar past bugs, their root causes, and verified fixes.
               </p>
             </div>
-            <Link href="/dashboard/debugger" className="mt-6 flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors">
+            <Link 
+              href="/dashboard/debugger" 
+              onClick={(e) => handleAuthLinkClick(e, "/dashboard/debugger")} 
+              className="mt-6 flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors"
+            >
               Start Debugging <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -565,7 +606,11 @@ export default function LandingPage() {
                 Scan repository structure for unused folders, dead files, and audit README.md files to automatically generate missing sections.
               </p>
             </div>
-            <Link href="/dashboard/health" className="mt-6 flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors">
+            <Link 
+              href="/dashboard/health" 
+              onClick={(e) => handleAuthLinkClick(e, "/dashboard/health")} 
+              className="mt-6 flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors"
+            >
               Run Repository Scan <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -581,7 +626,11 @@ export default function LandingPage() {
                 Intercept code diffs during code submission, review against past bug memory, and block changes that re-introduce regression bugs.
               </p>
             </div>
-            <Link href="/dashboard/reviewer" className="mt-6 flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors">
+            <Link 
+              href="/dashboard/reviewer" 
+              onClick={(e) => handleAuthLinkClick(e, "/dashboard/reviewer")} 
+              className="mt-6 flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors"
+            >
               Review Code Diff <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -592,7 +641,13 @@ export default function LandingPage() {
       <footer className="w-full max-w-7xl mx-auto px-6 py-6 border-t border-zinc-900 text-center text-[11px] text-zinc-500 z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>&copy; {new Date().getFullYear()} DevDuck AI. All Rights Reserved.</div>
         <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="hover:text-zinc-300 transition-colors">Console</Link>
+          <Link 
+            href="/dashboard" 
+            onClick={(e) => handleAuthLinkClick(e, "/dashboard")} 
+            className="hover:text-zinc-300 transition-colors"
+          >
+            go to Home
+          </Link>
           <a href="https://github.com/Parcle-AI/parcle-memory" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">Parcle Memory Engine</a>
         </div>
       </footer>
@@ -986,6 +1041,94 @@ export default function LandingPage() {
                 className="text-amber-500 hover:text-amber-400 font-bold cursor-pointer"
               >
                 Log in
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MOTIVE / EXPLORE VISION MODAL */}
+      {isMotiveOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div 
+            onClick={() => setIsMotiveOpen(false)} 
+            className="absolute inset-0 bg-black/75 backdrop-blur-sm animate-backdrop-fade"
+          />
+          <div className="glass-panel w-full max-w-lg p-6 sm:p-8 rounded-2xl relative z-10 animate-modal-enter shadow-2xl border border-zinc-850 max-h-[85vh] overflow-y-auto scrollbar-thin">
+            <button 
+              onClick={() => setIsMotiveOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex flex-col items-center mb-6 text-center">
+              <div className="p-2.5 bg-zinc-900/60 rounded-xl border border-zinc-800 text-amber-500 mb-3 animate-pulse">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <h2 className="text-xl font-bold tracking-tight text-gradient-gold">Our Motive & Vision</h2>
+              <p className="text-zinc-450 text-[10px] mt-1 uppercase tracking-widest font-bold">Codebase Intelligence for Teams</p>
+            </div>
+
+            <div className="flex flex-col gap-4 text-xs leading-relaxed text-zinc-350">
+              <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-900/60 hover:border-zinc-800/80 transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-zinc-900 rounded-lg text-amber-500 mt-0.5 shrink-0">
+                    <Database className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-zinc-200 mb-1">Persistent Codebase Memory</h4>
+                    <p className="text-zinc-400 text-[11px] leading-relaxed">
+                      Traditional search is stateless. DevDuck AI connects your source files, documentation, and PR histories into a unified context database, ensuring that knowledge remains persistent and never leaves with departing team members.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-900/60 hover:border-zinc-800/80 transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-zinc-900 rounded-lg text-amber-500 mt-0.5 shrink-0">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-zinc-200 mb-1">Instant Onboarding</h4>
+                    <p className="text-zinc-400 text-[11px] leading-relaxed">
+                      Instead of reading outdated documentation or scheduling multiple alignment syncs, new developers can query the codebase in natural language and receive immediate, context-cited answers instantly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-900/60 hover:border-zinc-800/80 transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-zinc-900 rounded-lg text-amber-500 mt-0.5 shrink-0">
+                    <Bug className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-zinc-200 mb-1">Zero-Sync Debugging</h4>
+                    <p className="text-zinc-400 text-[11px] leading-relaxed">
+                      By cross-referencing your terminal stacktraces against historical code commits and verified bug resolutions, DevDuck detects anomalies and recommends exact line fixes automatically.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-5 border-t border-zinc-900/60 flex flex-col gap-3">
+              <button 
+                onClick={() => {
+                  setIsMotiveOpen(false);
+                  setIsSignUpOpen(true);
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-amber-900/10"
+              >
+                <span>Deploy Workspace Now</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setIsMotiveOpen(false)}
+                className="w-full py-2.5 rounded-xl border border-zinc-800 hover:bg-zinc-900/40 text-zinc-400 hover:text-white font-semibold text-xs transition-all cursor-pointer"
+              >
+                Close Vision Board
               </button>
             </div>
           </div>
