@@ -84,7 +84,7 @@ Open `http://localhost:3000` in your browser. You can instantly register a new p
 
 ## 🔮 Future Scope
 While DevDuck AI currently functions as an open, unified ecosystem, we plan to implement robust user authentication in future versions.
-- **GitHub OAuth Integration:** In our next iteration, we will expand our existing Firebase Auth to include GitHub OAuth, securely tying Parcle `user_id` namespaces to specific developer accounts.
+- **Native Desktop App:** Packaging the DevDuck terminal watcher as a lightweight Electron or Tauri app to eliminate the need for running Python subprocesses locally.
 - **RBAC (Role-Based Access Control):** Allowing team leads to manage which developers can query specific project memories.
 
 ---
