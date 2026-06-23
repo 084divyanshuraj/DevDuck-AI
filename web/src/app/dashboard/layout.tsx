@@ -126,10 +126,6 @@ export default function DashboardLayout({
   };
 
   useEffect(() => {
-    // MOCK AUTH FOR DEMO
-    setUser({ uid: "mock_demo_user", displayName: "Demo User", email: "demo@devduck.ai" });
-    setLoadingAuth(false);
-    /*
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -140,7 +136,6 @@ export default function DashboardLayout({
     });
 
     return () => unsubscribe();
-    */
   }, []);
 
   useEffect(() => {
